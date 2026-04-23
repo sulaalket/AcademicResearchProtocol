@@ -7,3 +7,7 @@ appsettings.json
 *.suo
 *.db
 *.log
+*.key
+*.pem
+*.cert
+secrets.json
