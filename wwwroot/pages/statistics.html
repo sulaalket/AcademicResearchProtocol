@@ -1,0 +1,304 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Statistics | Academic Research Protocol</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f5f5f7;
+            padding-top: 60px;
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 0.8rem 1.5rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, #0066cc 0%, #0052a5 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-menu-desktop {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 2rem;
+        }
+
+        .nav-link-custom {
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            color: #4a5568;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+            .nav-link-custom:hover {
+                background: #f0f0f0;
+                color: #0066cc;
+            }
+
+            .nav-link-custom.active {
+                background: linear-gradient(135deg, #0066cc 0%, #0052a5 100%);
+                color: white;
+            }
+
+        .mobile-menu {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            z-index: 999;
+        }
+
+            .mobile-menu.show {
+                transform: translateY(0);
+            }
+
+            .mobile-menu .nav-link-custom {
+                display: block;
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid #f0f0f0;
+            }
+
+        .burger-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: none;
+            color: #4a5568;
+        }
+
+        .user-menu {
+            position: relative;
+            margin-left: auto;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            min-width: 180px;
+            display: none;
+            z-index: 1001;
+        }
+
+            .user-dropdown.show {
+                display: block;
+            }
+
+            .user-dropdown a {
+                display: block;
+                padding: 0.75rem 1rem;
+                color: #4a5568;
+                text-decoration: none;
+            }
+
+                .user-dropdown a:hover {
+                    background: #f5f5f7;
+                }
+
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: white;
+            border-bottom: 1px solid #f0f0f0;
+            padding: 1.2rem 1.5rem;
+            font-weight: 600;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+            .stat-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 280px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu-desktop {
+                display: none;
+            }
+
+            .burger-btn {
+                display: block;
+            }
+
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <button class="burger-btn" id="burgerBtn"><i class="bi bi-list"></i></button>
+            <a href="dashboard.html" class="navbar-brand">Academic<span style="font-weight:600;">Research</span></a>
+            <div class="nav-menu-desktop">
+                <a href="dashboard.html" class="nav-link-custom">Dashboard</a>
+                <a href="users.html" id="usersMenuDesktop" class="nav-link-custom" style="display: none;">Users</a>
+                <a href="documents.html" class="nav-link-custom">Documents</a>
+                <a href="research.html" class="nav-link-custom">Research</a>
+                <a href="statistics.html" class="nav-link-custom active">Statistics</a>
+                <a href="chat.html" class="nav-link-custom">Chat</a>
+            </div>
+        </div>
+        <div class="user-menu">
+            <button class="btn btn-outline-secondary btn-sm" id="userMenuBtn" style="border-radius: 30px;"><i class="bi bi-person-circle"></i> <span id="userNameDisplay"></span> <i class="bi bi-chevron-down"></i></button>
+            <div class="user-dropdown" id="userDropdown"><a href="#" onclick="logout()"><i class="bi bi-box-arrow-right me-2"></i> Logout</a></div>
+        </div>
+    </nav>
+
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="dashboard.html" class="nav-link-custom">Dashboard</a>
+        <a href="users.html" id="usersMenuMobile" class="nav-link-custom" style="display: none;">Users</a>
+        <a href="documents.html" class="nav-link-custom">Documents</a>
+        <a href="research.html" class="nav-link-custom">Research</a>
+        <a href="statistics.html" class="nav-link-custom active">Statistics</a>
+        <a href="chat.html" class="nav-link-custom">Chat</a>
+    </div>
+
+    <div class="container-fluid" style="max-width: 1400px; margin: 0 auto; padding: 20px;">
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3"><div class="stat-card" style="background: linear-gradient(135deg, #0066cc 0%, #0052a5 100%);"><div class="stat-value text-white" id="totalDocs">0</div><div class="stat-label text-white">Total Documents</div></div></div>
+            <div class="col-md-3 mb-3"><div class="stat-card" style="background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);"><div class="stat-value text-white" id="completedDocs">0</div><div class="stat-label text-white">Completed</div></div></div>
+            <div class="col-md-3 mb-3"><div class="stat-card" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);"><div class="stat-value text-white" id="completionRate">0%</div><div class="stat-label text-white">Completion Rate</div></div></div>
+            <div class="col-md-3 mb-3"><div class="stat-card" style="background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);"><div class="stat-value text-white" id="overdueDocs">0</div><div class="stat-label text-white">Overdue</div></div></div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6"><div class="card"><div class="card-header">Document Status Distribution</div><div class="card-body"><div class="chart-container"><canvas id="statusChart"></canvas></div></div></div></div>
+            <div class="col-md-6"><div class="card"><div class="card-header">Documents by Priority</div><div class="card-body"><div class="chart-container"><canvas id="priorityChart"></canvas></div></div></div></div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-6"><div class="card"><div class="card-header">Research Topics by Status</div><div class="card-body"><div class="chart-container"><canvas id="topicsChart"></canvas></div></div></div></div>
+            <div class="col-md-6"><div class="card"><div class="card-header">Monthly Document Activity</div><div class="card-body"><div class="chart-container"><canvas id="monthlyChart"></canvas></div></div></div></div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/dist/js/authGuard.js"></script>
+
+    <script>
+        protectPage();
+        document.getElementById('userNameDisplay').textContent = localStorage.getItem('userName') || 'User';
+        const userRoles = JSON.parse(localStorage.getItem('userRoles') || '[]');
+        if (userRoles.includes('Admin')) { document.getElementById('usersMenuDesktop').style.display = 'block'; document.getElementById('usersMenuMobile').style.display = 'block'; }
+        const burgerBtn = document.getElementById('burgerBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        burgerBtn.addEventListener('click', () => { mobileMenu.classList.toggle('show'); });
+        document.querySelectorAll('.mobile-menu a').forEach(link => { link.addEventListener('click', () => { mobileMenu.classList.remove('show'); }); });
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        const userDropdown = document.getElementById('userDropdown');
+        userMenuBtn.addEventListener('click', (e) => { e.stopPropagation(); userDropdown.classList.toggle('show'); });
+        document.addEventListener('click', () => { userDropdown.classList.remove('show'); });
+        let statusChart, priorityChart, topicsChart, monthlyChart;
+        async function loadStatistics() {
+            try {
+                const docsRes = await fetch('/api/Documents', { headers: { 'Authorization': 'Bearer ' + token } });
+                const docs = await docsRes.json();
+                const totalDocs = docs.length;
+                const completedDocs = docs.filter(d => d.status === 'Completed').length;
+                const draftDocs = docs.filter(d => d.status === 'Draft').length;
+                const inProgressDocs = docs.filter(d => d.status === 'InProgress').length;
+                const rate = totalDocs > 0 ? Math.round((completedDocs / totalDocs) * 100) : 0;
+                const overdueRes = await fetch('/api/Documents/reports/delayed', { headers: { 'Authorization': 'Bearer ' + token } });
+                const overdueDocs = await overdueRes.json();
+                document.getElementById('totalDocs').textContent = totalDocs;
+                document.getElementById('completedDocs').textContent = completedDocs;
+                document.getElementById('completionRate').textContent = rate + '%';
+                document.getElementById('overdueDocs').textContent = overdueDocs.length;
+                const high = docs.filter(d => d.priority === 2).length;
+                const medium = docs.filter(d => d.priority === 1).length;
+                const low = docs.filter(d => d.priority === 0).length;
+                if (statusChart) statusChart.destroy();
+                statusChart = new Chart(document.getElementById('statusChart'), { type: 'doughnut', data: { labels: ['Draft', 'In Progress', 'Completed'], datasets: [{ data: [draftDocs, inProgressDocs, completedDocs], backgroundColor: ['#6c757d', '#007bff', '#28a745'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+                if (priorityChart) priorityChart.destroy();
+                priorityChart = new Chart(document.getElementById('priorityChart'), { type: 'bar', data: { labels: ['Low', 'Medium', 'High'], datasets: [{ label: 'Documents', data: [low, medium, high], backgroundColor: ['#17a2b8', '#ffc107', '#dc3545'], borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, stepSize: 1 } } } });
+                const topicsRes = await fetch('/api/ResearchTopics', { headers: { 'Authorization': 'Bearer ' + token } });
+                const topics = await topicsRes.json();
+                const pending = topics.filter(t => t.status === 'Pending').length;
+                const assigned = topics.filter(t => t.status === 'Assigned').length;
+                const inProgress = topics.filter(t => t.status === 'InProgress').length;
+                const completed = topics.filter(t => t.status === 'Completed').length;
+                if (topicsChart) topicsChart.destroy();
+                topicsChart = new Chart(document.getElementById('topicsChart'), { type: 'bar', data: { labels: ['Pending', 'Assigned', 'In Progress', 'Completed'], datasets: [{ label: 'Topics', data: [pending, assigned, inProgress, completed], backgroundColor: ['#ffc107', '#17a2b8', '#007bff', '#28a745'], borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, stepSize: 1 } } } });
+                const months = []; const counts = []; const today = new Date();
+                for (let i = 5; i >= 0; i--) { const d = new Date(today.getFullYear(), today.getMonth() - i, 1); months.push(d.toLocaleString('default', { month: 'short' })); const cnt = docs.filter(doc => { const c = new Date(doc.createdAt); return c.getMonth() === d.getMonth() && c.getFullYear() === d.getFullYear(); }).length; counts.push(cnt); }
+                if (monthlyChart) monthlyChart.destroy();
+                monthlyChart = new Chart(document.getElementById('monthlyChart'), { type: 'line', data: { labels: months, datasets: [{ label: 'Documents Created', data: counts, borderColor: '#007bff', backgroundColor: 'rgba(0,123,255,0.1)', fill: true, tension: 0.3, pointBackgroundColor: '#007bff', pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, stepSize: 1 } } } });
+            } catch (e) { console.error(e); }
+        }
+        function logout() { localStorage.clear(); window.location.href = '/pages/login.html'; }
+        loadStatistics();
+    </script>
+</body>
+</html>

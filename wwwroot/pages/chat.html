@@ -1,0 +1,333 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Chat | Academic Research Protocol</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f5f5f7;
+            padding-top: 60px;
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 0.8rem 1.5rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, #0066cc 0%, #0052a5 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-menu-desktop {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 2rem;
+        }
+
+        .nav-link-custom {
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            color: #4a5568;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+            .nav-link-custom:hover {
+                background: #f0f0f0;
+                color: #0066cc;
+            }
+
+            .nav-link-custom.active {
+                background: linear-gradient(135deg, #0066cc 0%, #0052a5 100%);
+                color: white;
+            }
+
+        .mobile-menu {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            z-index: 999;
+        }
+
+            .mobile-menu.show {
+                transform: translateY(0);
+            }
+
+            .mobile-menu .nav-link-custom {
+                display: block;
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid #f0f0f0;
+            }
+
+        .burger-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: none;
+            color: #4a5568;
+        }
+
+        .user-menu {
+            position: relative;
+            margin-left: auto;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            min-width: 180px;
+            display: none;
+            z-index: 1001;
+        }
+
+            .user-dropdown.show {
+                display: block;
+            }
+
+            .user-dropdown a {
+                display: block;
+                padding: 0.75rem 1rem;
+                color: #4a5568;
+                text-decoration: none;
+            }
+
+                .user-dropdown a:hover {
+                    background: #f5f5f7;
+                }
+
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: white;
+            border-bottom: 1px solid #f0f0f0;
+            padding: 1.2rem 1.5rem;
+            font-weight: 600;
+        }
+
+        .chat-container {
+            height: 450px;
+            overflow-y: auto;
+            padding: 20px;
+            background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 12px;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            border-radius: 20px;
+            max-width: 70%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-sent {
+            background: linear-gradient(135deg, #0066cc 0%, #0052a5 100%);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-received {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .message-time {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .user-item {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 10px;
+        }
+
+            .user-item:hover {
+                background: linear-gradient(135deg, rgba(0, 102, 204, 0.1) 0%, rgba(0, 82, 165, 0.1) 100%);
+                transform: translateX(5px);
+            }
+
+        .user-active {
+            background: linear-gradient(135deg, #0066cc 0%, #0052a5 100%) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+        }
+
+        .form-control {
+            border-radius: 25px;
+            border: 1px solid #e0e0e0;
+            padding: 12px 20px;
+        }
+
+            .form-control:focus {
+                border-color: #0066cc;
+                box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+            }
+
+        .btn {
+            border-radius: 30px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0066cc 0%, #0052a5 100%);
+            border: none;
+        }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+            }
+
+        @media (max-width: 768px) {
+            .nav-menu-desktop {
+                display: none;
+            }
+
+            .burger-btn {
+                display: block;
+            }
+
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <button class="burger-btn" id="burgerBtn"><i class="bi bi-list"></i></button>
+            <a href="dashboard.html" class="navbar-brand">Academic<span style="font-weight:600;">Research</span></a>
+            <div class="nav-menu-desktop">
+                <a href="dashboard.html" class="nav-link-custom">Dashboard</a>
+                <a href="users.html" id="usersMenuDesktop" class="nav-link-custom" style="display: none;">Users</a>
+                <a href="documents.html" class="nav-link-custom">Documents</a>
+                <a href="research.html" class="nav-link-custom">Research</a>
+                <a href="statistics.html" class="nav-link-custom">Statistics</a>
+                <a href="chat.html" class="nav-link-custom active">Chat</a>
+            </div>
+        </div>
+        <div class="user-menu">
+            <button class="btn btn-outline-secondary btn-sm" id="userMenuBtn" style="border-radius: 30px;"><i class="bi bi-person-circle"></i> <span id="userNameDisplay"></span> <i class="bi bi-chevron-down"></i></button>
+            <div class="user-dropdown" id="userDropdown"><a href="#" onclick="logout()"><i class="bi bi-box-arrow-right me-2"></i> Logout</a></div>
+        </div>
+    </nav>
+
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="dashboard.html" class="nav-link-custom">Dashboard</a>
+        <a href="users.html" id="usersMenuMobile" class="nav-link-custom" style="display: none;">Users</a>
+        <a href="documents.html" class="nav-link-custom">Documents</a>
+        <a href="research.html" class="nav-link-custom">Research</a>
+        <a href="statistics.html" class="nav-link-custom">Statistics</a>
+        <a href="chat.html" class="nav-link-custom active">Chat</a>
+    </div>
+
+    <div class="container-fluid" style="max-width: 1400px; margin: 0 auto; padding: 20px;">
+        <div class="row">
+            <div class="col-md-3"><div class="card"><div class="card-header">Users</div><div class="card-body"><div id="usersList" class="user-list"><div class="text-muted text-center">Loading...</div></div></div></div></div>
+            <div class="col-md-9"><div class="card"><div class="card-header">Chat with <span id="chatWith">Select a user</span></div><div class="card-body"><div id="chatMessages" class="chat-container"><div class="text-muted text-center">Select a user to start chatting</div></div><div class="input-group mt-3"><input type="text" id="messageInput" class="form-control" placeholder="Type your message..." disabled><button id="sendBtn" class="btn btn-primary ms-2" disabled>Send</button></div></div></div></div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/dist/js/authGuard.js"></script>
+
+    <script>
+        protectPage();
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/pages/login.html';
+        document.getElementById('userNameDisplay').textContent = localStorage.getItem('userName') || 'User';
+        const userRoles = JSON.parse(localStorage.getItem('userRoles') || '[]');
+        if (userRoles.includes('Admin')) { document.getElementById('usersMenuDesktop').style.display = 'block'; document.getElementById('usersMenuMobile').style.display = 'block'; }
+        const burgerBtn = document.getElementById('burgerBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        burgerBtn.addEventListener('click', () => { mobileMenu.classList.toggle('show'); });
+        document.querySelectorAll('.mobile-menu a').forEach(link => { link.addEventListener('click', () => { mobileMenu.classList.remove('show'); }); });
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        const userDropdown = document.getElementById('userDropdown');
+        userMenuBtn.addEventListener('click', (e) => { e.stopPropagation(); userDropdown.classList.toggle('show'); });
+        document.addEventListener('click', () => { userDropdown.classList.remove('show'); });
+        let connection = null;
+        let currentReceiverId = null;
+        let currentReceiverName = null;
+        function escapeHtml(t) { if (!t) return ''; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+        function formatTime(d) { return new Date(d).toLocaleTimeString(); }
+        function addMessageToChat(senderName, message, isSent, timestamp) { const chatDiv = document.getElementById('chatMessages'); const msgDiv = document.createElement('div'); msgDiv.className = `message ${isSent ? 'message-sent' : 'message-received'}`; msgDiv.innerHTML = `<div><strong>${escapeHtml(senderName)}</strong></div><div>${escapeHtml(message)}</div><div class="message-time">${formatTime(timestamp)}</div>`; chatDiv.appendChild(msgDiv); chatDiv.scrollTop = chatDiv.scrollHeight; }
+        async function loadChatHistory(userId) { try { const r = await fetch(`/api/Chat/history/${userId}`, { headers: { 'Authorization': 'Bearer ' + token } }); if (r.ok) { const messages = await r.json(); const chatDiv = document.getElementById('chatMessages'); chatDiv.innerHTML = ''; const currentUserId = parseInt(localStorage.getItem('userId')); messages.forEach(msg => { const isSent = msg.senderId === currentUserId; const senderName = isSent ? 'You' : currentReceiverName; addMessageToChat(senderName, msg.message, isSent, msg.sentAt); }); if (messages.length === 0) chatDiv.innerHTML = '<div class="text-muted text-center">No messages yet.</div>'; } } catch (e) { console.error(e); } }
+        async function loadUsers() { try { const r = await fetch('/api/Chat/users', { headers: { 'Authorization': 'Bearer ' + token } }); if (r.ok) { const users = await r.json(); const usersList = document.getElementById('usersList'); if (users.length === 0) usersList.innerHTML = '<div class="text-muted text-center">No other users</div>'; else { usersList.innerHTML = users.map(u => `<div class="user-item p-2 mb-2 border rounded" onclick="selectUser(${u.id},'${escapeHtml(u.name)}')" data-id="${u.id}"><strong>${escapeHtml(u.name)}</strong></div>`).join(''); } } } catch (e) { console.error(e); } }
+        window.selectUser = async function (userId, userName) { document.querySelectorAll('.user-item').forEach(el => el.classList.remove('user-active')); const selected = document.querySelector(`.user-item[data-id="${userId}"]`); if (selected) selected.classList.add('user-active'); currentReceiverId = userId; currentReceiverName = userName; document.getElementById('chatWith').textContent = userName; document.getElementById('messageInput').disabled = false; document.getElementById('sendBtn').disabled = false; document.getElementById('messageInput').focus(); await loadChatHistory(userId); };
+        async function sendMessage() { const message = document.getElementById('messageInput').value.trim(); if (!message || !currentReceiverId || !connection) return; try { await connection.invoke('SendMessage', currentReceiverId, message); addMessageToChat('You', message, true, new Date()); document.getElementById('messageInput').value = ''; } catch (err) { console.error(err); alert('Failed to send message'); } }
+        async function initSignalR() { connection = new signalR.HubConnectionBuilder().withUrl('/chatHub', { accessTokenFactory: () => token }).withAutomaticReconnect().build(); connection.on('ReceiveMessage', (senderId, senderName, message, timestamp) => { if (currentReceiverId === senderId) { addMessageToChat(senderName, message, false, new Date(timestamp)); } else { const userDiv = document.querySelector(`.user-item[data-id="${senderId}"]`); if (userDiv) { userDiv.style.fontWeight = 'bold'; userDiv.style.borderLeft = '3px solid #007bff'; } } }); try { await connection.start(); console.log('SignalR connected'); loadUsers(); } catch (err) { console.error(err); document.getElementById('usersList').innerHTML = '<div class="alert alert-danger">Chat unavailable</div>'; } }
+        document.getElementById('sendBtn').addEventListener('click', sendMessage);
+        document.getElementById('messageInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+        function logout() { localStorage.clear(); window.location.href = '/pages/login.html'; }
+        initSignalR();
+    </script>
+</body>
+</html>
