@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AcademicResearchProtocol.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+91ac38aba7bc4b892248a04913792856f9f0dbdf")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e44b3b19244469ca2913cb8443c95b1caef6cc57")]
 [assembly: System.Reflection.AssemblyProductAttribute("AcademicResearchProtocol.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AcademicResearchProtocol.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,0 +1,21 @@
+## Ignore build outputs
+bin/
+obj/
+publish/
+
+## Ignore secrets and config
+appsettings.json
+appsettings.Development.json
+*.key
+*.pem
+secrets.json
+
+## Ignore Visual Studio files
+.vs/
+*.user
+*.suo
+*.sln.ide
+
+## Ignore logs
+*.log
+*.db
