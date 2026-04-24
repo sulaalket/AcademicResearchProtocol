@@ -54,15 +54,34 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "YourSuperSecretKeyForJWTTokenGeneration123456789!";
+
+// =======================
+// CONFIG VALIDATION
+// =======================
+
+// JWT KEY (User Secrets / AppSettings)
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrEmpty(jwtKey))
+    throw new Exception("JWT Key is missing from configuration");
+
 var key = Encoding.UTF8.GetBytes(jwtKey);
 
+
+// DB CONNECTION (User Secrets / AppSettings)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrEmpty(connectionString))
+    throw new Exception("Database connection string is missing");
+
+
+// =======================
+// AUTHENTICATION
+// =======================
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.RequireHttpsMetadata = false;
         options.SaveToken = true;
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
@@ -80,10 +99,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             {
                 var accessToken = context.Request.Query["access_token"];
                 var path = context.HttpContext.Request.Path;
+
                 if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chatHub"))
                 {
                     context.Token = accessToken;
                 }
+
                 return Task.CompletedTask;
             }
         };
@@ -92,11 +113,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddSignalR();
 
-// Database connection
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Dependency Injection
+// =======================
+// DATABASE
+// =======================
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+
+// =======================
+// DEPENDENCY INJECTION
+// =======================
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
@@ -115,8 +142,13 @@ builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IAiService, AiService>();
 
+
 var app = builder.Build();
 
+
+// =======================
+// SWAGGER
+// =======================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -127,17 +159,35 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Seed database
+
+// =======================
+// DATABASE SEED (SAFE)
+// =======================
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    DbInitializer.Seed(db);
+
+    try
+    {
+        DbInitializer.Seed(db);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("DB SEED ERROR:");
+        Console.WriteLine(ex.ToString());
+    }
 }
 
+
+// =======================
+// PIPELINE
+// =======================
 app.UseStaticFiles();
 app.UseHttpsRedirection();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapHub<ChatHub>("/chatHub");
 app.MapControllers();
 

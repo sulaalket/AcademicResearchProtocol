@@ -1,8 +1,10 @@
 ﻿using AcademicResearchProtocol.Application.DTOs;
 using AcademicResearchProtocol.Application.Services;
+using AcademicResearchProtocol.Domain.Interfaces;
+using AcademicResearchProtocol.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
+using System;
 
 namespace AcademicResearchProtocol.Web.Controllers
 {
@@ -11,40 +13,39 @@ namespace AcademicResearchProtocol.Web.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IUserRepository _userRepository;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, IUserRepository userRepository)
         {
             _userService = userService;
+            _userRepository = userRepository;
         }
 
-        // GET: api/Users/all - Available to Professors and Admins for assignment
         [Authorize(Roles = "Admin,Professor")]
         [HttpGet("all")]
-        public IEnumerable<UserDto> GetAllUsersForAssignment()
+        public IActionResult GetAllUsersForAssignment()
         {
-            return _userService.GetAllUsers();
+            return Ok(_userService.GetAllUsers());
         }
 
-        // GET: api/Users - Admin only
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        public IEnumerable<UserDto> GetUsers()
+        public IActionResult GetUsers()
         {
-            return _userService.GetAllUsers();
+            return Ok(_userService.GetAllUsers());
         }
 
         [Authorize(Roles = "Admin")]
         [HttpGet("{id}")]
-        public ActionResult<UserDto> GetUserById(int id)
+        public IActionResult GetUserById(int id)
         {
             var user = _userService.GetUserById(id);
-            if (user == null)
-                return NotFound();
+            if (user == null) return NotFound();
             return Ok(user);
         }
 
         [HttpPost]
-        [AllowAnonymous]  // Allow registration without login
+        [AllowAnonymous]
         public IActionResult CreateUser([FromBody] CreateUserDto dto)
         {
             _userService.CreateUser(dto);
@@ -55,8 +56,15 @@ namespace AcademicResearchProtocol.Web.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeleteUser(int id)
         {
-            _userService.DeleteUser(id);
-            return Ok("User deleted");
+            try
+            {
+                _userRepository.Delete(id);
+                return Ok(new { message = "User deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
 
         [Authorize(Roles = "Admin")]
@@ -67,15 +75,11 @@ namespace AcademicResearchProtocol.Web.Controllers
             return Ok("Role assigned successfully");
         }
 
-        // GET: api/Users/chat-list - Available to all authenticated users for chat
         [Authorize]
         [HttpGet("chat-list")]
         public IActionResult GetChatUsers()
         {
-            var users = _userService.GetAllUsers();
-            return Ok(users);
+            return Ok(_userService.GetAllUsers());
         }
-
-
     }
 }
