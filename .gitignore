@@ -10,7 +10,7 @@ appsettings.Development.json
 *.pem
 secrets.json
 
-## Ignore Visual Studio files
+
 .vs/
 *.user
 *.suo
