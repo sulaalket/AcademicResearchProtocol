@@ -12,6 +12,7 @@ using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services
@@ -55,11 +56,8 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 
-// =======================
-// CONFIG VALIDATION
-// =======================
 
-// JWT KEY (User Secrets / AppSettings)
+
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrEmpty(jwtKey))
     throw new Exception("JWT Key is missing from configuration");
@@ -67,15 +65,11 @@ if (string.IsNullOrEmpty(jwtKey))
 var key = Encoding.UTF8.GetBytes(jwtKey);
 
 
-// DB CONNECTION (User Secrets / AppSettings)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrEmpty(connectionString))
     throw new Exception("Database connection string is missing");
 
 
-// =======================
-// AUTHENTICATION
-// =======================
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -114,16 +108,14 @@ builder.Services.AddAuthorization();
 builder.Services.AddSignalR();
 
 
-// =======================
-// DATABASE
-// =======================
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 
-// =======================
+
 // DEPENDENCY INJECTION
-// =======================
+
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
@@ -146,9 +138,7 @@ builder.Services.AddScoped<IAiService, AiService>();
 var app = builder.Build();
 
 
-// =======================
 // SWAGGER
-// =======================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -160,9 +150,8 @@ if (app.Environment.IsDevelopment())
 }
 
 
-// =======================
+
 // DATABASE SEED (SAFE)
-// =======================
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -179,9 +168,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 
-// =======================
+
 // PIPELINE
-// =======================
+
 app.UseStaticFiles();
 app.UseHttpsRedirection();
 
