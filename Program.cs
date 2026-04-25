@@ -137,17 +137,13 @@ builder.Services.AddScoped<IAiService, AiService>();
 
 var app = builder.Build();
 
-
-// SWAGGER
-if (app.Environment.IsDevelopment())
+// SWAGGER - Enable in ALL environments
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "AcademicResearchProtocol API v1");
-        c.EnablePersistAuthorization();
-    });
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "AcademicResearchProtocol API v1");
+    c.RoutePrefix = "swagger"; // This makes Swagger UI available at /swagger
+});
 
 
 
