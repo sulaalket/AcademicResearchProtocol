@@ -6,6 +6,7 @@
     <title>Research Topics | Academic Research Protocol</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="/pages/config.js"></script>
     <style>
         * {
             margin: 0;
@@ -336,57 +337,63 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/dist/js/authGuard.js"></script>
 
     <script>
-        protectPage();
+        // Check authentication
         const token = localStorage.getItem('token');
-        if (!token) window.location.href = '/pages/login.html';
+        if (!token) {
+            window.location.href = '/pages/login.html';
+        }
+
         document.getElementById('userNameDisplay').textContent = localStorage.getItem('userName') || 'User';
         const userRoles = JSON.parse(localStorage.getItem('userRoles') || '[]');
         const isAdmin = userRoles.includes('Admin');
         const isProfessor = userRoles.includes('Professor');
         const isStudent = userRoles.includes('Student');
         const userId = parseInt(localStorage.getItem('userId'));
+
         if (isAdmin) {
             document.getElementById('usersMenuDesktop').style.display = 'block';
             document.getElementById('usersMenuMobile').style.display = 'block';
         }
         if (isStudent) document.getElementById('createTopicCard').style.display = 'block';
         if (isProfessor || isAdmin) document.getElementById('addMilestoneCard').style.display = 'block';
+
         const burgerBtn = document.getElementById('burgerBtn');
         const mobileMenu = document.getElementById('mobileMenu');
         burgerBtn.addEventListener('click', () => { mobileMenu.classList.toggle('show'); });
         document.querySelectorAll('.mobile-menu a').forEach(link => {
             link.addEventListener('click', () => { mobileMenu.classList.remove('show'); });
         });
+
         const userMenuBtn = document.getElementById('userMenuBtn');
         const userDropdown = document.getElementById('userDropdown');
         userMenuBtn.addEventListener('click', (e) => { e.stopPropagation(); userDropdown.classList.toggle('show'); });
         document.addEventListener('click', () => { userDropdown.classList.remove('show'); });
+
         function escapeHtml(t) { if (!t) return ''; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
         function getStatusBadge(s) { const b = { 'Pending': 'warning', 'Assigned': 'primary', 'InProgress': 'info', 'Completed': 'success', 'Rejected': 'danger' }; return b[s] || 'secondary'; }
         function getMilestoneStatusBadge(s) { const b = { 'Pending': 'secondary', 'Submitted': 'primary', 'Approved': 'success', 'Rejected': 'danger' }; return b[s] || 'secondary'; }
+
         let currentMilestoneId = null;
 
         // AI Summarize function for milestone
         window.aiSummarizeMilestone = async function (milestoneId, milestoneName) {
             try {
-                // Show loading indicator
                 document.getElementById('aiSummaryContent').innerHTML = '<div class="text-center py-3"><i class="bi bi-hourglass-split"></i> Generating AI summary...</div>';
                 document.getElementById('aiSummaryModal').style.display = 'block';
 
-                const response = await fetch(`/api/ResearchTopics/milestones/${milestoneId}/ai-summarize`, {
+                const response = await fetch(`${API_BASE_URL}/api/ResearchTopics/milestones/${milestoneId}/ai-summarize`, {
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
                 if (response.ok) {
                     const data = await response.json();
                     document.getElementById('aiSummaryContent').innerHTML = `
-                    <strong>Milestone: ${escapeHtml(data.milestoneName)}</strong>
-                    <hr>
-                    <div style="white-space: pre-wrap;">${escapeHtml(data.summary)}</div>
-                `;
+                        <strong>Milestone: ${escapeHtml(data.milestoneName)}</strong>
+                        <hr>
+                        <div style="white-space: pre-wrap;">${escapeHtml(data.summary)}</div>
+                    `;
                 } else {
                     document.getElementById('aiSummaryContent').innerHTML = '<div class="alert alert-danger">Error generating summary. Please try again.</div>';
                 }
@@ -408,23 +415,22 @@
                 const isGraded = m.status === 'Approved';
                 const canSubmit = isStudent && !isSubmitted && !isGraded && topicStatus === 'InProgress';
                 const canGrade = (isProfessor || isAdmin) && isSubmitted && !isGraded;
-                // AI Summarize button shows for professors/admins when milestone is submitted (not yet graded)
                 const canAISummarize = (isProfessor || isAdmin) && isSubmitted && !isGraded;
                 const hasFile = !!m.submissionFileName;
                 h += `<tr>
-<td><strong>${escapeHtml(m.name)}</strong></td>
-<td>${escapeHtml(m.description || '-')}</td>
-<td>${m.deadline ? new Date(m.deadline).toLocaleDateString() : '-'}</td>
-<td><span class="badge badge-${getMilestoneStatusBadge(m.status)}">${m.status}</span></td>
-<td class="text-center">${hasFile ? `<button onclick="downloadMilestoneFile(${m.id})" class="btn btn-sm btn-info">Download File</button><br><small>${escapeHtml(m.submissionFileName)}</small>` : (isSubmitted ? '<span class="text-muted">No file</span>' : '-')}</td>
-<td class="text-center">${m.grade !== null ? m.grade : '-'}</td>
-<td class="text-center">${escapeHtml(m.feedback || '-')}</td>
-<td class="text-center">
-${canSubmit ? `<button onclick="showSubmitMilestone(${m.id})" class="btn btn-sm btn-primary">Submit Work</button>` : ''}
-${canGrade ? `<button onclick="gradeMilestone(${m.id})" class="btn btn-sm btn-warning">Grade</button>` : ''}
-${canAISummarize ? `<button onclick="aiSummarizeMilestone(${m.id}, '${escapeHtml(m.name).replace(/'/g, "\\'")}')" class="btn btn-sm btn-info ms-1">🤖 AI Review</button>` : ''}
-</td>
-</tr>`;
+                        <td><strong>${escapeHtml(m.name)}</strong></a>
+                        <td>${escapeHtml(m.description || '-')}</a>
+                        <td>${m.deadline ? new Date(m.deadline).toLocaleDateString() : '-'}</a>
+                        <td><span class="badge badge-${getMilestoneStatusBadge(m.status)}">${m.status}</span></a>
+                        <td class="text-center">${hasFile ? `<button onclick="downloadMilestoneFile(${m.id})" class="btn btn-sm btn-info">Download File</button><br><small>${escapeHtml(m.submissionFileName)}</small>` : (isSubmitted ? '<span class="text-muted">No file</span>' : '-')}</a>
+                        <td class="text-center">${m.grade !== null ? m.grade : '-'}</a>
+                        <td class="text-center">${escapeHtml(m.feedback || '-')}</a>
+                        <td class="text-center">
+                        ${canSubmit ? `<button onclick="showSubmitMilestone(${m.id})" class="btn btn-sm btn-primary">Submit Work</button>` : ''}
+                        ${canGrade ? `<button onclick="gradeMilestone(${m.id})" class="btn btn-sm btn-warning">Grade</button>` : ''}
+                        ${canAISummarize ? `<button onclick="aiSummarizeMilestone(${m.id}, '${escapeHtml(m.name).replace(/'/g, "\\'")}')" class="btn btn-sm btn-info ms-1">🤖 AI Review</button>` : ''}
+                        </a>
+                    </tr>`;
             });
             h += '</tbody></table></div>';
             return h;
@@ -433,7 +439,7 @@ ${canAISummarize ? `<button onclick="aiSummarizeMilestone(${m.id}, '${escapeHtml
         // Calculate Final Grade function
         window.calculateFinalGrade = async function (topicId) {
             try {
-                const response = await fetch(`/api/ResearchTopics/${topicId}/calculate-final-grade`, {
+                const response = await fetch(`${API_BASE_URL}/api/ResearchTopics/${topicId}/calculate-final-grade`, {
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
@@ -452,64 +458,238 @@ ${canAISummarize ? `<button onclick="aiSummarizeMilestone(${m.id}, '${escapeHtml
 
         async function loadTopics() {
             try {
-                const r = await fetch('/api/ResearchTopics', { headers: { 'Authorization': 'Bearer ' + token } }); const topics = await r.json(); const select = document.getElementById('milestoneTopicSelect'); select.innerHTML = '<option value="">Select Topic</option>'; topics.forEach(t => { if (t.status === 'Assigned' || t.status === 'InProgress') select.innerHTML += `<option value="${t.id}">${escapeHtml(t.title)} (${t.status})</option>`; }); const filter = document.getElementById('statusFilter').value; let filtered = topics; if (filter !== 'all') filtered = topics.filter(t => t.status === filter); const container = document.getElementById('topicsList'); container.innerHTML = ''; for (const topic of filtered) {
-                    let milestones = []; try { const mr = await fetch(`/api/ResearchTopics/${topic.id}/milestones`, { headers: { 'Authorization': 'Bearer ' + token } }); if (mr.ok) milestones = await mr.json(); } catch (e) { } const canAssign = (isProfessor || isAdmin) && topic.status === 'Pending', canStartWork = (isProfessor || isAdmin) && topic.status === 'Assigned', canComplete = (isProfessor || isAdmin) && topic.status === 'InProgress', canReject = (isProfessor || isAdmin) && topic.status === 'Pending', canAddMilestone = (isProfessor || isAdmin) && (topic.status === 'Assigned' || topic.status === 'InProgress');
-                    container.innerHTML += `<div class="card card-outline card-${getStatusBadge(topic.status)} mb-3"><div class="card-header" data-bs-toggle="collapse" data-bs-target="#topic-${topic.id}" style="cursor:pointer;"><h3 class="card-title"><strong>${escapeHtml(topic.title)}</strong><span class="badge badge-${getStatusBadge(topic.status)} ms-2">${topic.status}</span></h3><div class="card-tools"><i class="bi bi-chevron-down"></i></div></div><div id="topic-${topic.id}" class="collapse"><div class="card-body"><p><strong>Description:</strong> ${escapeHtml(topic.description)}</p><p><strong>Student:</strong> ${escapeHtml(topic.studentName)}</p>${topic.professorName ? `<p><strong>Professor:</strong> ${escapeHtml(topic.professorName)}</p>` : ''}<p><strong>Submitted:</strong> ${new Date(topic.submittedAt).toLocaleDateString()}</p>${topic.assignedAt ? `<p><strong>Assigned:</strong> ${new Date(topic.assignedAt).toLocaleDateString()}</p>` : ''}${topic.rejectionReason ? `<p class="text-danger"><strong>Rejection Reason:</strong> ${escapeHtml(topic.rejectionReason)}</p>` : ''}
-<div class="mb-3">
-${canAssign ? `<button onclick="assignTopic(${topic.id})" class="btn btn-sm btn-success me-1">Claim Topic</button>` : ''}
-${canStartWork ? `<button onclick="startWork(${topic.id})" class="btn btn-sm btn-primary me-1">Start Work</button>` : ''}
-${canComplete ? `<button onclick="completeTopic(${topic.id})" class="btn btn-sm btn-info me-1">Complete Topic</button>` : ''}
-${canReject ? `<button onclick="rejectTopic(${topic.id})" class="btn btn-sm btn-danger me-1">Reject</button>` : ''}
-${canAddMilestone ? `<button onclick="showAddMilestone(${topic.id})" class="btn btn-sm btn-secondary">Add Milestone</button>` : ''}
-${(isProfessor || isAdmin) ? `<button onclick="summarizeTopic(${topic.id})" class="btn btn-sm btn-info ms-1">AI Summarize</button>` : ''}
-${isAdmin ? `<button onclick="deleteTopic(${topic.id})" class="btn btn-sm btn-danger ms-1">Delete Topic</button>` : ''}
-</div><hr><h5>Milestones</h5><div id="milestones-${topic.id}">${renderMilestones(milestones, topic.id, topic.status)}</div>
-${topic.finalGrade ? `
-<div class="alert alert-success mt-3">
-<strong>🎓 Final Grade: ${topic.finalGrade}%</strong>
-<br><small>Graded on: ${topic.gradedAt ? new Date(topic.gradedAt).toLocaleDateString() : '-'}</small>
-</div>
-` : (topic.status === 'Completed' ? `
-<div class="mt-3">
-<button onclick="calculateFinalGrade(${topic.id})" class="btn btn-sm btn-success">
-📊 Calculate Final Grade
-</button>
-</div>
-` : (topic.status === 'InProgress' && (isProfessor || isAdmin) ? `
-<div class="mt-3 text-muted small">
-<i class="bi bi-info-circle"></i> Final grade will be available after all milestones are graded.
-</div>
-` : ''))}
-</div></div></div>`;
-                } document.getElementById('loadingSpinner').style.display = 'none'; document.getElementById('topicsContainer').style.display = 'block';
-            } catch (e) { console.error(e); document.getElementById('loadingSpinner').innerHTML = '<div class="alert alert-danger">Error loading topics</div>'; }
+                const r = await fetch(`${API_BASE_URL}/api/ResearchTopics`, { headers: { 'Authorization': 'Bearer ' + token } });
+                const topics = await r.json();
+                const select = document.getElementById('milestoneTopicSelect');
+                select.innerHTML = '<option value="">Select Topic</option>';
+                topics.forEach(t => {
+                    if (t.status === 'Assigned' || t.status === 'InProgress')
+                        select.innerHTML += `<option value="${t.id}">${escapeHtml(t.title)} (${t.status})</option>`;
+                });
+                const filter = document.getElementById('statusFilter').value;
+                let filtered = topics;
+                if (filter !== 'all') filtered = topics.filter(t => t.status === filter);
+                const container = document.getElementById('topicsList');
+                container.innerHTML = '';
+                for (const topic of filtered) {
+                    let milestones = [];
+                    try {
+                        const mr = await fetch(`${API_BASE_URL}/api/ResearchTopics/${topic.id}/milestones`, { headers: { 'Authorization': 'Bearer ' + token } });
+                        if (mr.ok) milestones = await mr.json();
+                    } catch (e) { }
+                    const canAssign = (isProfessor || isAdmin) && topic.status === 'Pending';
+                    const canStartWork = (isProfessor || isAdmin) && topic.status === 'Assigned';
+                    const canComplete = (isProfessor || isAdmin) && topic.status === 'InProgress';
+                    const canReject = (isProfessor || isAdmin) && topic.status === 'Pending';
+                    const canAddMilestone = (isProfessor || isAdmin) && (topic.status === 'Assigned' || topic.status === 'InProgress');
+
+                    container.innerHTML += `<div class="card card-outline card-${getStatusBadge(topic.status)} mb-3">
+                            <div class="card-header" data-bs-toggle="collapse" data-bs-target="#topic-${topic.id}" style="cursor:pointer;">
+                                <h3 class="card-title"><strong>${escapeHtml(topic.title)}</strong><span class="badge badge-${getStatusBadge(topic.status)} ms-2">${topic.status}</span></h3>
+                                <div class="card-tools"><i class="bi bi-chevron-down"></i></div>
+                            </div>
+                            <div id="topic-${topic.id}" class="collapse">
+                                <div class="card-body">
+                                    <p><strong>Description:</strong> ${escapeHtml(topic.description)}</p>
+                                    <p><strong>Student:</strong> ${escapeHtml(topic.studentName)}</p>
+                                    ${topic.professorName ? `<p><strong>Professor:</strong> ${escapeHtml(topic.professorName)}</p>` : ''}
+                                    <p><strong>Submitted:</strong> ${new Date(topic.submittedAt).toLocaleDateString()}</p>
+                                    ${topic.assignedAt ? `<p><strong>Assigned:</strong> ${new Date(topic.assignedAt).toLocaleDateString()}</p>` : ''}
+                                    ${topic.rejectionReason ? `<p class="text-danger"><strong>Rejection Reason:</strong> ${escapeHtml(topic.rejectionReason)}</p>` : ''}
+                                    <div class="mb-3">
+                                        ${canAssign ? `<button onclick="assignTopic(${topic.id})" class="btn btn-sm btn-success me-1">Claim Topic</button>` : ''}
+                                        ${canStartWork ? `<button onclick="startWork(${topic.id})" class="btn btn-sm btn-primary me-1">Start Work</button>` : ''}
+                                        ${canComplete ? `<button onclick="completeTopic(${topic.id})" class="btn btn-sm btn-info me-1">Complete Topic</button>` : ''}
+                                        ${canReject ? `<button onclick="rejectTopic(${topic.id})" class="btn btn-sm btn-danger me-1">Reject</button>` : ''}
+                                        ${canAddMilestone ? `<button onclick="showAddMilestone(${topic.id})" class="btn btn-sm btn-secondary">Add Milestone</button>` : ''}
+                                        ${(isProfessor || isAdmin) ? `<button onclick="summarizeTopic(${topic.id})" class="btn btn-sm btn-info ms-1">AI Summarize</button>` : ''}
+                                        ${isAdmin ? `<button onclick="deleteTopic(${topic.id})" class="btn btn-sm btn-danger ms-1">Delete Topic</button>` : ''}
+                                    </div>
+                                    <hr>
+                                    <h5>Milestones</h5>
+                                    <div id="milestones-${topic.id}">${renderMilestones(milestones, topic.id, topic.status)}</div>
+                                    ${topic.finalGrade ? `
+                                    <div class="alert alert-success mt-3">
+                                        <strong>🎓 Final Grade: ${topic.finalGrade}%</strong>
+                                        <br><small>Graded on: ${topic.gradedAt ? new Date(topic.gradedAt).toLocaleDateString() : '-'}</small>
+                                    </div>
+                                    ` : (topic.status === 'Completed' ? `
+                                    <div class="mt-3">
+                                        <button onclick="calculateFinalGrade(${topic.id})" class="btn btn-sm btn-success">📊 Calculate Final Grade</button>
+                                    </div>
+                                    ` : (topic.status === 'InProgress' && (isProfessor || isAdmin) ? `
+                                    <div class="mt-3 text-muted small">
+                                        <i class="bi bi-info-circle"></i> Final grade will be available after all milestones are graded.
+                                    </div>
+                                    ` : ''))}
+                                </div>
+                            </div>
+                        </div>`;
+                }
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('topicsContainer').style.display = 'block';
+            } catch (e) {
+                console.error(e);
+                document.getElementById('loadingSpinner').innerHTML = '<div class="alert alert-danger">Error loading topics</div>';
+            }
         }
-        window.assignTopic = async function (id) { try { const r = await fetch(`/api/ResearchTopics/${id}/assign`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); if (r.ok) { alert('Topic claimed!'); loadTopics(); } else alert('Error'); } catch (e) { alert(e.message); } };
-        window.startWork = async function (id) { try { const r = await fetch(`/api/ResearchTopics/${id}/start-work`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); if (r.ok) { alert('Work started!'); loadTopics(); } else alert('Error'); } catch (e) { alert(e.message); } };
-        window.completeTopic = async function (id) { if (confirm('Complete?')) { try { const r = await fetch(`/api/ResearchTopics/${id}/complete`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); if (r.ok) { alert('Completed!'); loadTopics(); } else alert('Error'); } catch (e) { alert(e.message); } } };
-        window.rejectTopic = async function (id) { const reason = prompt('Rejection reason:'); if (!reason) return; try { const r = await fetch(`/api/ResearchTopics/${id}/reject`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(reason) }); if (r.ok) { alert('Rejected'); loadTopics(); } else alert('Error'); } catch (e) { alert(e.message); } };
-        window.showAddMilestone = function (id) { document.getElementById('milestoneTopicSelect').value = id; document.getElementById('milestoneName').focus(); };
-        window.showSubmitMilestone = function (id) { currentMilestoneId = id; document.getElementById('submitMilestoneModal').style.display = 'block'; document.getElementById('modalOverlay').style.display = 'block'; document.getElementById('submitNotes').value = ''; document.getElementById('submitFile').value = ''; document.getElementById('submitMessage').innerHTML = ''; };
-        function closeMilestoneModal() { document.getElementById('submitMilestoneModal').style.display = 'none'; document.getElementById('modalOverlay').style.display = 'none'; }
-        window.submitMilestoneWithFile = async function () { const mid = currentMilestoneId; const notes = document.getElementById('submitNotes').value; const file = document.getElementById('submitFile').files[0]; const fd = new FormData(); fd.append('submissionNotes', notes); if (file) fd.append('submissionFile', file); try { const r = await fetch(`/api/ResearchTopics/milestones/${mid}/submit`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd }); if (r.ok) { alert('Submitted!'); closeMilestoneModal(); loadTopics(); } else { alert('Error'); } } catch (e) { alert(e.message); } };
-        window.downloadMilestoneFile = async function (id) { try { const r = await fetch(`/api/ResearchTopics/milestones/${id}/download`, { headers: { 'Authorization': 'Bearer ' + token } }); if (r.ok) { const b = await r.blob(); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = 'submission.pdf'; a.click(); URL.revokeObjectURL(u); } else alert('Error'); } catch (e) { alert(e.message); } };
-        window.gradeMilestone = async function (id) { const grade = prompt('Grade (0-100):'); if (!grade) return; const g = parseInt(grade); if (isNaN(g) || g < 0 || g > 100) { alert('Invalid grade'); return; } const feedback = prompt('Feedback:'); try { const r = await fetch(`/api/ResearchTopics/milestones/${id}/grade`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ grade: g, feedback: feedback || '' }) }); if (r.ok) { alert('Graded!'); loadTopics(); } else alert('Error'); } catch (e) { alert(e.message); } };
-        window.summarizeTopic = async function (id) { try { const r = await fetch(`/api/ResearchTopics/${id}/summarize`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); if (r.ok) { const d = await r.json(); alert(`AI Summary:\n\n${d.summary}`); } else alert('Error'); } catch (e) { alert(e.message); } };
+
+        window.assignTopic = async function (id) {
+            try {
+                const r = await fetch(`${API_BASE_URL}/api/ResearchTopics/${id}/assign`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
+                if (r.ok) { alert('Topic claimed!'); loadTopics(); } else alert('Error');
+            } catch (e) { alert(e.message); }
+        };
+
+        window.startWork = async function (id) {
+            try {
+                const r = await fetch(`${API_BASE_URL}/api/ResearchTopics/${id}/start-work`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
+                if (r.ok) { alert('Work started!'); loadTopics(); } else alert('Error');
+            } catch (e) { alert(e.message); }
+        };
+
+        window.completeTopic = async function (id) {
+            if (confirm('Complete?')) {
+                try {
+                    const r = await fetch(`${API_BASE_URL}/api/ResearchTopics/${id}/complete`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
+                    if (r.ok) { alert('Completed!'); loadTopics(); } else alert('Error');
+                } catch (e) { alert(e.message); }
+            }
+        };
+
+        window.rejectTopic = async function (id) {
+            const reason = prompt('Rejection reason:');
+            if (!reason) return;
+            try {
+                const r = await fetch(`${API_BASE_URL}/api/ResearchTopics/${id}/reject`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(reason) });
+                if (r.ok) { alert('Rejected'); loadTopics(); } else alert('Error');
+            } catch (e) { alert(e.message); }
+        };
+
+        window.showAddMilestone = function (id) {
+            document.getElementById('milestoneTopicSelect').value = id;
+            document.getElementById('milestoneName').focus();
+        };
+
+        window.showSubmitMilestone = function (id) {
+            currentMilestoneId = id;
+            document.getElementById('submitMilestoneModal').style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+            document.getElementById('submitNotes').value = '';
+            document.getElementById('submitFile').value = '';
+            document.getElementById('submitMessage').innerHTML = '';
+        };
+
+        function closeMilestoneModal() {
+            document.getElementById('submitMilestoneModal').style.display = 'none';
+            document.getElementById('modalOverlay').style.display = 'none';
+        }
+
+        window.submitMilestoneWithFile = async function () {
+            const mid = currentMilestoneId;
+            const notes = document.getElementById('submitNotes').value;
+            const file = document.getElementById('submitFile').files[0];
+            const fd = new FormData();
+            fd.append('submissionNotes', notes);
+            if (file) fd.append('submissionFile', file);
+            try {
+                const r = await fetch(`${API_BASE_URL}/api/ResearchTopics/milestones/${mid}/submit`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd });
+                if (r.ok) { alert('Submitted!'); closeMilestoneModal(); loadTopics(); }
+                else { alert('Error'); }
+            } catch (e) { alert(e.message); }
+        };
+
+        window.downloadMilestoneFile = async function (id) {
+            try {
+                const r = await fetch(`${API_BASE_URL}/api/ResearchTopics/milestones/${id}/download`, { headers: { 'Authorization': 'Bearer ' + token } });
+                if (r.ok) {
+                    const b = await r.blob();
+                    const u = URL.createObjectURL(b);
+                    const a = document.createElement('a');
+                    a.href = u;
+                    a.download = 'submission.pdf';
+                    a.click();
+                    URL.revokeObjectURL(u);
+                } else alert('Error');
+            } catch (e) { alert(e.message); }
+        };
+
+        window.gradeMilestone = async function (id) {
+            const grade = prompt('Grade (0-100):');
+            if (!grade) return;
+            const g = parseInt(grade);
+            if (isNaN(g) || g < 0 || g > 100) { alert('Invalid grade'); return; }
+            const feedback = prompt('Feedback:');
+            try {
+                const r = await fetch(`${API_BASE_URL}/api/ResearchTopics/milestones/${id}/grade`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ grade: g, feedback: feedback || '' }) });
+                if (r.ok) { alert('Graded!'); loadTopics(); } else alert('Error');
+            } catch (e) { alert(e.message); }
+        };
+
+        window.summarizeTopic = async function (id) {
+            try {
+                const r = await fetch(`${API_BASE_URL}/api/ResearchTopics/${id}/summarize`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
+                if (r.ok) {
+                    const d = await r.json();
+                    alert(`AI Summary:\n\n${d.summary}`);
+                } else alert('Error');
+            } catch (e) { alert(e.message); }
+        };
+
         window.deleteTopic = async function (topicId) {
             if (confirm('⚠️ WARNING: Deleting this topic will also delete ALL associated milestones and submissions. This action cannot be undone. Are you sure?')) {
                 if (confirm('Are you ABSOLUTELY sure? This is permanent.')) {
                     try {
-                        const response = await fetch(`/api/ResearchTopics/${topicId}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+                        const response = await fetch(`${API_BASE_URL}/api/ResearchTopics/${topicId}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
                         if (response.ok) { alert('Topic and all related milestones have been deleted successfully.'); loadTopics(); }
                         else { const error = await response.text(); alert('Error deleting topic: ' + error); }
                     } catch (error) { alert('Error: ' + error.message); }
                 }
             }
         };
-        document.getElementById('createTopicBtn').addEventListener('click', async () => { const t = document.getElementById('topicTitle').value.trim(); const d = document.getElementById('topicDescription').value.trim(); if (!t || !d) { alert('Enter title and description'); return; } try { const r = await fetch('/api/ResearchTopics', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ title: t, description: d, studentId: userId }) }); if (r.ok) { document.getElementById('topicTitle').value = ''; document.getElementById('topicDescription').value = ''; alert('Topic submitted!'); loadTopics(); } else alert('Error'); } catch (e) { alert(e.message); } });
-        document.getElementById('addMilestoneBtn').addEventListener('click', async () => { const tid = document.getElementById('milestoneTopicSelect').value; const n = document.getElementById('milestoneName').value.trim(); const d = document.getElementById('milestoneDescription').value.trim(); const dl = document.getElementById('milestoneDeadline').value; if (!tid || !n) { alert('Select topic and enter name'); return; } const body = { name: n, description: d, order: 1 }; if (dl) body.deadline = new Date(dl).toISOString(); try { const r = await fetch(`/api/ResearchTopics/${tid}/milestones`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(body) }); if (r.ok) { document.getElementById('milestoneName').value = ''; document.getElementById('milestoneDescription').value = ''; document.getElementById('milestoneDeadline').value = ''; alert('Milestone added!'); loadTopics(); } else alert('Error'); } catch (e) { alert(e.message); } });
+
+        document.getElementById('createTopicBtn').addEventListener('click', async () => {
+            const t = document.getElementById('topicTitle').value.trim();
+            const d = document.getElementById('topicDescription').value.trim();
+            if (!t || !d) { alert('Enter title and description'); return; }
+            try {
+                const r = await fetch(`${API_BASE_URL}/api/ResearchTopics`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ title: t, description: d, studentId: userId }) });
+                if (r.ok) {
+                    document.getElementById('topicTitle').value = '';
+                    document.getElementById('topicDescription').value = '';
+                    alert('Topic submitted!');
+                    loadTopics();
+                } else alert('Error');
+            } catch (e) { alert(e.message); }
+        });
+
+        document.getElementById('addMilestoneBtn').addEventListener('click', async () => {
+            const tid = document.getElementById('milestoneTopicSelect').value;
+            const n = document.getElementById('milestoneName').value.trim();
+            const d = document.getElementById('milestoneDescription').value.trim();
+            const dl = document.getElementById('milestoneDeadline').value;
+            if (!tid || !n) { alert('Select topic and enter name'); return; }
+            const body = { name: n, description: d, order: 1 };
+            if (dl) body.deadline = new Date(dl).toISOString();
+            try {
+                const r = await fetch(`${API_BASE_URL}/api/ResearchTopics/${tid}/milestones`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(body) });
+                if (r.ok) {
+                    document.getElementById('milestoneName').value = '';
+                    document.getElementById('milestoneDescription').value = '';
+                    document.getElementById('milestoneDeadline').value = '';
+                    alert('Milestone added!');
+                    loadTopics();
+                } else alert('Error');
+            } catch (e) { alert(e.message); }
+        });
+
         document.getElementById('statusFilter').addEventListener('change', () => loadTopics());
-        function logout() { localStorage.clear(); window.location.href = '/pages/login.html'; }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/pages/login.html';
+        }
+
         loadTopics();
     </script>
 </body>

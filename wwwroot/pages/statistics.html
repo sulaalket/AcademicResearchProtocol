@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="/pages/config.js"></script>
     <style>
         * {
             margin: 0;
@@ -227,77 +228,191 @@
 
     <div class="container-fluid" style="max-width: 1400px; margin: 0 auto; padding: 20px;">
         <div class="row mb-4">
-            <div class="col-md-3 mb-3"><div class="stat-card" style="background: linear-gradient(135deg, #0066cc 0%, #0052a5 100%);"><div class="stat-value text-white" id="totalDocs">0</div><div class="stat-label text-white">Total Documents</div></div></div>
-            <div class="col-md-3 mb-3"><div class="stat-card" style="background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);"><div class="stat-value text-white" id="completedDocs">0</div><div class="stat-label text-white">Completed</div></div></div>
-            <div class="col-md-3 mb-3"><div class="stat-card" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);"><div class="stat-value text-white" id="completionRate">0%</div><div class="stat-label text-white">Completion Rate</div></div></div>
-            <div class="col-md-3 mb-3"><div class="stat-card" style="background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);"><div class="stat-value text-white" id="overdueDocs">0</div><div class="stat-label text-white">Overdue</div></div></div>
+            <div class="col-md-3 mb-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #0066cc 0%, #0052a5 100%);">
+                    <div class="stat-value text-white" id="totalDocs">0</div>
+                    <div class="stat-label text-white">Total Documents</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);">
+                    <div class="stat-value text-white" id="completedDocs">0</div>
+                    <div class="stat-label text-white">Completed</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">
+                    <div class="stat-value text-white" id="completionRate">0%</div>
+                    <div class="stat-label text-white">Completion Rate</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);">
+                    <div class="stat-value text-white" id="overdueDocs">0</div>
+                    <div class="stat-label text-white">Overdue</div>
+                </div>
+            </div>
         </div>
 
         <div class="row">
-            <div class="col-md-6"><div class="card"><div class="card-header">Document Status Distribution</div><div class="card-body"><div class="chart-container"><canvas id="statusChart"></canvas></div></div></div></div>
-            <div class="col-md-6"><div class="card"><div class="card-header">Documents by Priority</div><div class="card-body"><div class="chart-container"><canvas id="priorityChart"></canvas></div></div></div></div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Document Status Distribution</div>
+                    <div class="card-body">
+                        <div class="chart-container"><canvas id="statusChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Documents by Priority</div>
+                    <div class="card-body">
+                        <div class="chart-container"><canvas id="priorityChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="row mt-4">
-            <div class="col-md-6"><div class="card"><div class="card-header">Research Topics by Status</div><div class="card-body"><div class="chart-container"><canvas id="topicsChart"></canvas></div></div></div></div>
-            <div class="col-md-6"><div class="card"><div class="card-header">Monthly Document Activity</div><div class="card-body"><div class="chart-container"><canvas id="monthlyChart"></canvas></div></div></div></div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Research Topics by Status</div>
+                    <div class="card-body">
+                        <div class="chart-container"><canvas id="topicsChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Monthly Document Activity</div>
+                    <div class="card-body">
+                        <div class="chart-container"><canvas id="monthlyChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/dist/js/authGuard.js"></script>
 
     <script>
-        protectPage();
+        // Check authentication
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/pages/login.html';
+        }
+
         document.getElementById('userNameDisplay').textContent = localStorage.getItem('userName') || 'User';
         const userRoles = JSON.parse(localStorage.getItem('userRoles') || '[]');
-        if (userRoles.includes('Admin')) { document.getElementById('usersMenuDesktop').style.display = 'block'; document.getElementById('usersMenuMobile').style.display = 'block'; }
+        if (userRoles.includes('Admin')) {
+            document.getElementById('usersMenuDesktop').style.display = 'block';
+            document.getElementById('usersMenuMobile').style.display = 'block';
+        }
+
+        // Mobile menu toggle
         const burgerBtn = document.getElementById('burgerBtn');
         const mobileMenu = document.getElementById('mobileMenu');
         burgerBtn.addEventListener('click', () => { mobileMenu.classList.toggle('show'); });
         document.querySelectorAll('.mobile-menu a').forEach(link => { link.addEventListener('click', () => { mobileMenu.classList.remove('show'); }); });
+
+        // User dropdown
         const userMenuBtn = document.getElementById('userMenuBtn');
         const userDropdown = document.getElementById('userDropdown');
         userMenuBtn.addEventListener('click', (e) => { e.stopPropagation(); userDropdown.classList.toggle('show'); });
         document.addEventListener('click', () => { userDropdown.classList.remove('show'); });
+
         let statusChart, priorityChart, topicsChart, monthlyChart;
+
         async function loadStatistics() {
             try {
-                const docsRes = await fetch('/api/Documents', { headers: { 'Authorization': 'Bearer ' + token } });
+                const docsRes = await fetch(`${API_BASE_URL}/api/Documents`, { headers: { 'Authorization': 'Bearer ' + token } });
                 const docs = await docsRes.json();
+
                 const totalDocs = docs.length;
                 const completedDocs = docs.filter(d => d.status === 'Completed').length;
                 const draftDocs = docs.filter(d => d.status === 'Draft').length;
                 const inProgressDocs = docs.filter(d => d.status === 'InProgress').length;
                 const rate = totalDocs > 0 ? Math.round((completedDocs / totalDocs) * 100) : 0;
-                const overdueRes = await fetch('/api/Documents/reports/delayed', { headers: { 'Authorization': 'Bearer ' + token } });
+
+                const overdueRes = await fetch(`${API_BASE_URL}/api/Documents/reports/delayed`, { headers: { 'Authorization': 'Bearer ' + token } });
                 const overdueDocs = await overdueRes.json();
+
                 document.getElementById('totalDocs').textContent = totalDocs;
                 document.getElementById('completedDocs').textContent = completedDocs;
                 document.getElementById('completionRate').textContent = rate + '%';
                 document.getElementById('overdueDocs').textContent = overdueDocs.length;
+
                 const high = docs.filter(d => d.priority === 2).length;
                 const medium = docs.filter(d => d.priority === 1).length;
                 const low = docs.filter(d => d.priority === 0).length;
+
                 if (statusChart) statusChart.destroy();
-                statusChart = new Chart(document.getElementById('statusChart'), { type: 'doughnut', data: { labels: ['Draft', 'In Progress', 'Completed'], datasets: [{ data: [draftDocs, inProgressDocs, completedDocs], backgroundColor: ['#6c757d', '#007bff', '#28a745'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+                statusChart = new Chart(document.getElementById('statusChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Draft', 'In Progress', 'Completed'],
+                        datasets: [{ data: [draftDocs, inProgressDocs, completedDocs], backgroundColor: ['#6c757d', '#007bff', '#28a745'], borderWidth: 0 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                });
+
                 if (priorityChart) priorityChart.destroy();
-                priorityChart = new Chart(document.getElementById('priorityChart'), { type: 'bar', data: { labels: ['Low', 'Medium', 'High'], datasets: [{ label: 'Documents', data: [low, medium, high], backgroundColor: ['#17a2b8', '#ffc107', '#dc3545'], borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, stepSize: 1 } } } });
-                const topicsRes = await fetch('/api/ResearchTopics', { headers: { 'Authorization': 'Bearer ' + token } });
+                priorityChart = new Chart(document.getElementById('priorityChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Low', 'Medium', 'High'],
+                        datasets: [{ label: 'Documents', data: [low, medium, high], backgroundColor: ['#17a2b8', '#ffc107', '#dc3545'], borderRadius: 8 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, stepSize: 1 } } }
+                });
+
+                const topicsRes = await fetch(`${API_BASE_URL}/api/ResearchTopics`, { headers: { 'Authorization': 'Bearer ' + token } });
                 const topics = await topicsRes.json();
                 const pending = topics.filter(t => t.status === 'Pending').length;
                 const assigned = topics.filter(t => t.status === 'Assigned').length;
                 const inProgress = topics.filter(t => t.status === 'InProgress').length;
                 const completed = topics.filter(t => t.status === 'Completed').length;
+
                 if (topicsChart) topicsChart.destroy();
-                topicsChart = new Chart(document.getElementById('topicsChart'), { type: 'bar', data: { labels: ['Pending', 'Assigned', 'In Progress', 'Completed'], datasets: [{ label: 'Topics', data: [pending, assigned, inProgress, completed], backgroundColor: ['#ffc107', '#17a2b8', '#007bff', '#28a745'], borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, stepSize: 1 } } } });
-                const months = []; const counts = []; const today = new Date();
-                for (let i = 5; i >= 0; i--) { const d = new Date(today.getFullYear(), today.getMonth() - i, 1); months.push(d.toLocaleString('default', { month: 'short' })); const cnt = docs.filter(doc => { const c = new Date(doc.createdAt); return c.getMonth() === d.getMonth() && c.getFullYear() === d.getFullYear(); }).length; counts.push(cnt); }
+                topicsChart = new Chart(document.getElementById('topicsChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Pending', 'Assigned', 'In Progress', 'Completed'],
+                        datasets: [{ label: 'Topics', data: [pending, assigned, inProgress, completed], backgroundColor: ['#ffc107', '#17a2b8', '#007bff', '#28a745'], borderRadius: 8 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, stepSize: 1 } } }
+                });
+
+                const months = [];
+                const counts = [];
+                const today = new Date();
+                for (let i = 5; i >= 0; i--) {
+                    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                    months.push(d.toLocaleString('default', { month: 'short' }));
+                    const cnt = docs.filter(doc => {
+                        const c = new Date(doc.createdAt);
+                        return c.getMonth() === d.getMonth() && c.getFullYear() === d.getFullYear();
+                    }).length;
+                    counts.push(cnt);
+                }
+
                 if (monthlyChart) monthlyChart.destroy();
-                monthlyChart = new Chart(document.getElementById('monthlyChart'), { type: 'line', data: { labels: months, datasets: [{ label: 'Documents Created', data: counts, borderColor: '#007bff', backgroundColor: 'rgba(0,123,255,0.1)', fill: true, tension: 0.3, pointBackgroundColor: '#007bff', pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, stepSize: 1 } } } });
+                monthlyChart = new Chart(document.getElementById('monthlyChart'), {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{ label: 'Documents Created', data: counts, borderColor: '#007bff', backgroundColor: 'rgba(0,123,255,0.1)', fill: true, tension: 0.3, pointBackgroundColor: '#007bff', pointRadius: 4 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, stepSize: 1 } } }
+                });
             } catch (e) { console.error(e); }
         }
-        function logout() { localStorage.clear(); window.location.href = '/pages/login.html'; }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/pages/login.html';
+        }
+
         loadStatistics();
     </script>
 </body>

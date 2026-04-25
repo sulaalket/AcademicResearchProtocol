@@ -330,62 +330,133 @@
     <script src="/dist/js/authGuard.js"></script>
 
     <script>
-        const API_BASE_URL = 'https://academic-researching-cka7h3guhxb8dre8.centralus-01.azurewebsites.net';
-        protectPage();
+        // Check authentication
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/pages/login.html';
+        }
+
         document.getElementById('userNameDisplay').textContent = localStorage.getItem('userName') || 'User';
         const userRoles = JSON.parse(localStorage.getItem('userRoles') || '[]');
         const isAdmin = userRoles.includes('Admin');
         const isStudent = userRoles.includes('Student');
         const currentUserId = parseInt(localStorage.getItem('userId'));
+
         if (isAdmin) {
             document.getElementById('usersMenuDesktop').style.display = 'block';
             document.getElementById('usersMenuMobile').style.display = 'block';
             document.getElementById('usersCard').style.display = 'block';
         }
+
         const burgerBtn = document.getElementById('burgerBtn');
         const mobileMenu = document.getElementById('mobileMenu');
         burgerBtn.addEventListener('click', () => { mobileMenu.classList.toggle('show'); });
         document.querySelectorAll('.mobile-menu a').forEach(link => { link.addEventListener('click', () => { mobileMenu.classList.remove('show'); }); });
+
         const userMenuBtn = document.getElementById('userMenuBtn');
         const userDropdown = document.getElementById('userDropdown');
         userMenuBtn.addEventListener('click', (e) => { e.stopPropagation(); userDropdown.classList.toggle('show'); });
         document.addEventListener('click', () => { userDropdown.classList.remove('show'); });
-        function getStatusBadge(status) { const b = { 'Draft': 'secondary', 'InProgress': 'primary', 'Completed': 'success', 'Pending': 'warning' }; return b[status] || 'secondary'; }
-        function escapeHtml(t) { if (!t) return ''; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
-        function showDelayedReport() { window.location.href = '/pages/reports.html?type=delayed'; }
-        function showHighPriorityReport() { window.location.href = '/pages/reports.html?type=highpriority'; }
+
+        function getStatusBadge(status) {
+            const b = { 'Draft': 'secondary', 'InProgress': 'primary', 'Completed': 'success', 'Pending': 'warning' };
+            return b[status] || 'secondary';
+        }
+
+        function escapeHtml(t) {
+            if (!t) return '';
+            const d = document.createElement('div');
+            d.textContent = t;
+            return d.innerHTML;
+        }
+
+        function showDelayedReport() {
+            window.location.href = '/pages/reports.html?type=delayed';
+        }
+
+        function showHighPriorityReport() {
+            window.location.href = '/pages/reports.html?type=highpriority';
+        }
+
         async function loadAlerts() {
             try {
                 const alertsContainer = document.getElementById('alertsContainer');
-                const delayedRes = await fetch(${ API_BASE_URL }/api/Documents / reports / delayed, { headers: { 'Authorization': 'Bearer ' + token } });
+                const delayedRes = await fetch(`${API_BASE_URL}/api/Documents/reports/delayed`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
                 const delayedDocs = await delayedRes.json();
-                const highPriorityRes = await fetch(${ API_BASE_URL } / api / Documents / reports / by - priority / 2, { headers: { 'Authorization': 'Bearer ' + token } });
+
+                const highPriorityRes = await fetch(`${API_BASE_URL}/api/Documents/reports/by-priority/2`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
                 const highPriorityDocs = await highPriorityRes.json();
+
                 alertsContainer.innerHTML = '';
                 let hasAlerts = false;
-                if (delayedDocs.length > 0) { hasAlerts = true; alertsContainer.innerHTML += '<div class="alert alert-warning"><i class="bi bi-clock-history me-2"></i><strong>' + delayedDocs.length + ' document(s) overdue!</strong><hr class="my-2"><button class="btn btn-sm btn-warning" onclick="showDelayedReport()">View Report</button></div>'; }
-                if (highPriorityDocs.length > 0) { hasAlerts = true; alertsContainer.innerHTML += '<div class="alert alert-danger"><i class="bi bi-flag-fill me-2"></i><strong>' + highPriorityDocs.length + ' high priority document(s) pending!</strong><hr class="my-2"><button class="btn btn-sm btn-danger" onclick="showHighPriorityReport()">View Report</button></div>'; }
-                if (!hasAlerts) { alertsContainer.innerHTML = '<div class="alert alert-success text-center">All caught up! No pending alerts.</div>'; }
-            } catch (error) { console.error(error); }
+
+                if (delayedDocs.length > 0) {
+                    hasAlerts = true;
+                    alertsContainer.innerHTML += '<div class="alert alert-warning"><i class="bi bi-clock-history me-2"></i><strong>' + delayedDocs.length + ' document(s) overdue!</strong><hr class="my-2"><button class="btn btn-sm btn-warning" onclick="showDelayedReport()">View Report</button></div>';
+                }
+                if (highPriorityDocs.length > 0) {
+                    hasAlerts = true;
+                    alertsContainer.innerHTML += '<div class="alert alert-danger"><i class="bi bi-flag-fill me-2"></i><strong>' + highPriorityDocs.length + ' high priority document(s) pending!</strong><hr class="my-2"><button class="btn btn-sm btn-danger" onclick="showHighPriorityReport()">View Report</button></div>';
+                }
+                if (!hasAlerts) {
+                    alertsContainer.innerHTML = '<div class="alert alert-success text-center">All caught up! No pending alerts.</div>';
+                }
+            } catch (error) {
+                console.error('Error loading alerts:', error);
+            }
         }
+
         async function loadDashboard() {
             try {
-                const docsRes = await fetch(${ API_BASE_URL } / api / Documents, { headers: { 'Authorization': 'Bearer ' + token } });
+                const docsRes = await fetch(`${API_BASE_URL}/api/Documents`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
                 let documents = await docsRes.json();
                 if (isStudent) documents = documents.filter(d => d.createdByUserId === currentUserId || d.assignedToUserId === currentUserId);
                 document.getElementById('totalDocuments').textContent = documents.length;
+
                 const tableBody = document.getElementById('recentDocuments');
                 tableBody.innerHTML = '';
-                documents.slice(0, 5).forEach(doc => { tableBody.innerHTML += '<tr><td><code>' + escapeHtml(doc.protocolNumber) + '</code></td><td>' + escapeHtml(doc.title) + '</td><td><span class="badge badge-' + getStatusBadge(doc.status) + '">' + doc.status + '</span></td><td>' + escapeHtml(doc.createdByUserName) + '</td><td>' + (doc.deadline ? new Date(doc.deadline).toLocaleDateString() : '-') + '</td></tr>'; });
-                const topicsRes = await fetch(${API_BASE_URL}/api/ResearchTopics, { headers: { 'Authorization': 'Bearer ' + token } });
+                documents.slice(0, 5).forEach(doc => {
+                    tableBody.innerHTML += `<tr>
+                        <td><code>${escapeHtml(doc.protocolNumber)}</code></td>
+                        <td>${escapeHtml(doc.title)}</a></td>
+                        <td><span class="badge badge-${getStatusBadge(doc.status)}">${doc.status}</span></td>
+                        <td>${escapeHtml(doc.createdByUserName)}</a></td>
+                        <td>${doc.deadline ? new Date(doc.deadline).toLocaleDateString() : '-'}</a></td>
+                    </tr>`;
+                });
+
+                const topicsRes = await fetch(`${API_BASE_URL}/api/ResearchTopics`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
                 let topics = await topicsRes.json();
                 if (isStudent) topics = topics.filter(t => t.studentId === currentUserId);
                 document.getElementById('totalTopics').textContent = topics.length;
-                if (isAdmin) { const usersRes = await fetch(${ API_BASE_URL } / api / Users, { headers: { 'Authorization': 'Bearer ' + token } }); const users = await usersRes.json(); document.getElementById('totalUsers').textContent = users.length; }
-            } catch (error) { console.error(error); }
+
+                if (isAdmin) {
+                    const usersRes = await fetch(`${API_BASE_URL}/api/Users`, {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    const users = await usersRes.json();
+                    document.getElementById('totalUsers').textContent = users.length;
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
         }
-        function logout() { localStorage.clear(); window.location.href = '/pages/login.html'; }
-        loadDashboard(); loadAlerts();
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/pages/login.html';
+        }
+
+        loadDashboard();
+        loadAlerts();
     </script>
 </body>
 </html>

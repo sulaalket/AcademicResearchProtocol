@@ -6,6 +6,7 @@
     <title>Documents | Academic Research Protocol</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="/pages/config.js"></script>
     <style>
         * {
             margin: 0;
@@ -316,11 +317,14 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/dist/js/authGuard.js"></script>
 
     <script>
-        protectPage();
-    
+        // Check authentication
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/pages/login.html';
+        }
+
         document.getElementById('userNameDisplay').textContent = localStorage.getItem('userName') || 'User';
         const userRoles = JSON.parse(localStorage.getItem('userRoles') || '[]');
         const isAdmin = userRoles.includes('Admin');
@@ -328,27 +332,66 @@
         const isStudent = userRoles.includes('Student');
         const canCreate = isAdmin || isProfessor;
         const currentUserId = parseInt(localStorage.getItem('userId'));
-        if (isAdmin) { document.getElementById('usersMenuDesktop').style.display = 'block'; document.getElementById('usersMenuMobile').style.display = 'block'; }
+
+        if (isAdmin) {
+            document.getElementById('usersMenuDesktop').style.display = 'block';
+            document.getElementById('usersMenuMobile').style.display = 'block';
+        }
         if (!canCreate) document.getElementById('createDocCard').style.display = 'none';
+
         const burgerBtn = document.getElementById('burgerBtn');
         const mobileMenu = document.getElementById('mobileMenu');
         burgerBtn.addEventListener('click', () => { mobileMenu.classList.toggle('show'); });
         document.querySelectorAll('.mobile-menu a').forEach(link => { link.addEventListener('click', () => { mobileMenu.classList.remove('show'); }); });
+
         const userMenuBtn = document.getElementById('userMenuBtn');
         const userDropdown = document.getElementById('userDropdown');
         userMenuBtn.addEventListener('click', (e) => { e.stopPropagation(); userDropdown.classList.toggle('show'); });
         document.addEventListener('click', () => { userDropdown.classList.remove('show'); });
+
         function escapeHtml(t) { if (!t) return ''; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
         function getClassificationText(v) { return { 0: 'Public', 1: 'Restricted', 2: 'Secret' }[v] || 'Unknown'; }
         function getStatusBadge(s) { const b = { 'Draft': 'secondary', 'InProgress': 'primary', 'Completed': 'success', 'Pending': 'warning' }; return b[s] || 'secondary'; }
         function getPriorityBadge(p) { if (p === 2) return 'danger'; if (p === 1) return 'warning'; return 'info'; }
         function getPriorityText(p) { if (p === 2) return 'High'; if (p === 1) return 'Medium'; return 'Low'; }
+
         let currentDocumentId = null;
-        async function downloadProtocolBook() { try { const r = await fetch('/api/Documents/protocol-book', { headers: { 'Authorization': 'Bearer ' + token } }); if (r.ok) { const b = await r.blob(); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = 'ProtocolBook.pdf'; a.click(); URL.revokeObjectURL(u); } else alert('Error'); } catch (e) { alert('Error'); } }
-        async function loadUsers() { try { const r = await fetch('/api/Users/all', { headers: { 'Authorization': 'Bearer ' + token } }); if (r.ok) { const u = await r.json(); const s = document.getElementById('docAssignedTo'); if (s) { s.innerHTML = '<option value="">Assign to User</option>'; u.forEach(u => { s.innerHTML += `<option value="${u.id}">${escapeHtml(u.name)} (${u.roles.join(', ') || 'No role'})</option>`; }); } } } catch (e) { } }
+
+        async function downloadProtocolBook() {
+            try {
+                const r = await fetch(`${API_BASE_URL}/api/Documents/protocol-book`, { headers: { 'Authorization': 'Bearer ' + token } });
+                if (r.ok) {
+                    const b = await r.blob();
+                    const u = URL.createObjectURL(b);
+                    const a = document.createElement('a');
+                    a.href = u;
+                    a.download = 'ProtocolBook.pdf';
+                    a.click();
+                    URL.revokeObjectURL(u);
+                } else alert('Error');
+            } catch (e) { alert('Error'); }
+        }
+
+        async function loadUsers() {
+            try {
+                const r = await fetch(`${API_BASE_URL}/api/Users/all`, { headers: { 'Authorization': 'Bearer ' + token } });
+                if (r.ok) {
+                    const u = await r.json();
+                    const s = document.getElementById('docAssignedTo');
+                    if (s) {
+                        s.innerHTML = '<option value="">Assign to User</option>';
+                        u.forEach(u => {
+                            s.innerHTML += `<option value="${u.id}">${escapeHtml(u.name)} (${u.roles.join(', ') || 'No role'})</option>`;
+                        });
+                    }
+                }
+            } catch (e) { }
+        }
+
         async function loadDocuments() {
             try {
-                const r = await fetch('/api/Documents', { headers: { 'Authorization': 'Bearer ' + token } });
+                const r = await fetch(`${API_BASE_URL}/api/Documents`, { headers: { 'Authorization': 'Bearer ' + token } });
                 let docs = await r.json();
                 if (isStudent) docs = docs.filter(d => d.assignedToUserId === currentUserId);
                 const tbody = document.getElementById('documentsTableBody');
@@ -356,41 +399,135 @@
                 for (const doc of docs) {
                     const hasFile = !!doc.fileName;
                     tbody.innerHTML += `<tr>
-                                <td><code>${escapeHtml(doc.protocolNumber)}</code></td>
-                                <td>${escapeHtml(doc.title)}</td>
-                                <td><span class="badge badge-${doc.classification === 2 ? 'danger' : doc.classification === 1 ? 'warning' : 'info'}">${getClassificationText(doc.classification)}</span></td>
-                                <td><span class="badge badge-${getPriorityBadge(doc.priority)}">${getPriorityText(doc.priority)}</span></td>
-                                <td><span class="badge badge-${getStatusBadge(doc.status)}">${doc.status}</span></td>
-                                <td>${escapeHtml(doc.createdByUserName)}</td>
-                                <td>${escapeHtml(doc.assignedToUserName || '-')}</td>
-                                <td>${doc.deadline ? new Date(doc.deadline).toLocaleDateString() : '-'}</td>
-                                <td>${hasFile ? `<button onclick="downloadFile(${doc.id})" class="btn btn-sm btn-info">Download</button>` : '-'}</td>
-                                <td>
-                                    ${canCreate ? `<button onclick="showUpload(${doc.id})" class="btn btn-sm btn-primary">Upload</button> <button onclick="showScanModal(${doc.id})" class="btn btn-sm btn-info">Scan</button>` : ''}
-                                    ${doc.assignedToUserId === currentUserId && (doc.status === 'Pending' || doc.status === 'InProgress') ? `<button onclick="showUpload(${doc.id})" class="btn btn-sm btn-primary">Upload File</button> <button onclick="showScanModal(${doc.id})" class="btn btn-sm btn-info">Scan</button>` : ''}
-                                    ${isAdmin ? `<button onclick="deleteDocument(${doc.id})" class="btn btn-sm btn-danger">Delete</button>` : ''}
-                                 </td>
-                                <td>
-                                    ${doc.assignedToUserId === currentUserId && doc.status === 'Pending' ? `<button onclick="updateDocStatus(${doc.id},'InProgress')" class="btn btn-sm btn-warning">Start Work</button>` : ''}
-                                    ${doc.assignedToUserId === currentUserId && doc.status === 'InProgress' ? `<button onclick="updateDocStatus(${doc.id},'Completed')" class="btn btn-sm btn-success">Complete</button>` : ''}
-                                    ${canCreate && doc.status !== 'Completed' && doc.status !== 'InProgress' && doc.status !== 'Pending' ? `<button onclick="updateDocStatus(${doc.id},'InProgress')" class="btn btn-sm btn-warning">Start</button> <button onclick="updateDocStatus(${doc.id},'Completed')" class="btn btn-sm btn-success">Complete</button>` : ''}
-                                    ${doc.status === 'Completed' ? '<span class="badge badge-success">✓ Completed</span>' : ''}
-                                 </td>
-                            </tr>`;
+                                    <td><code>${escapeHtml(doc.protocolNumber)}</code></td>
+                                    <td>${escapeHtml(doc.title)}</a></td>
+                                    <td><span class="badge badge-${doc.classification === 2 ? 'danger' : doc.classification === 1 ? 'warning' : 'info'}">${getClassificationText(doc.classification)}</span></td>
+                                    <td><span class="badge badge-${getPriorityBadge(doc.priority)}">${getPriorityText(doc.priority)}</span></td>
+                                    <td><span class="badge badge-${getStatusBadge(doc.status)}">${doc.status}</span></td>
+                                    <td>${escapeHtml(doc.createdByUserName)}</a></td>
+                                    <td>${escapeHtml(doc.assignedToUserName || '-')}</a></td>
+                                    <td>${doc.deadline ? new Date(doc.deadline).toLocaleDateString() : '-'}</a></td>
+                                    <td>${hasFile ? `<button onclick="downloadFile(${doc.id})" class="btn btn-sm btn-info">Download</button>` : '-'}</td>
+                                    <td>
+                                        ${canCreate ? `<button onclick="showUpload(${doc.id})" class="btn btn-sm btn-primary">Upload</button> <button onclick="showScanModal(${doc.id})" class="btn btn-sm btn-info">Scan</button>` : ''}
+                                        ${doc.assignedToUserId === currentUserId && (doc.status === 'Pending' || doc.status === 'InProgress') ? `<button onclick="showUpload(${doc.id})" class="btn btn-sm btn-primary">Upload File</button> <button onclick="showScanModal(${doc.id})" class="btn btn-sm btn-info">Scan</button>` : ''}
+                                        ${isAdmin ? `<button onclick="deleteDocument(${doc.id})" class="btn btn-sm btn-danger">Delete</button>` : ''}
+                                      </a>
+                                    <td>
+                                        ${doc.assignedToUserId === currentUserId && doc.status === 'Pending' ? `<button onclick="updateDocStatus(${doc.id},'InProgress')" class="btn btn-sm btn-warning">Start Work</button>` : ''}
+                                        ${doc.assignedToUserId === currentUserId && doc.status === 'InProgress' ? `<button onclick="updateDocStatus(${doc.id},'Completed')" class="btn btn-sm btn-success">Complete</button>` : ''}
+                                        ${canCreate && doc.status !== 'Completed' && doc.status !== 'InProgress' && doc.status !== 'Pending' ? `<button onclick="updateDocStatus(${doc.id},'InProgress')" class="btn btn-sm btn-warning">Start</button> <button onclick="updateDocStatus(${doc.id},'Completed')" class="btn btn-sm btn-success">Complete</button>` : ''}
+                                        ${doc.status === 'Completed' ? '<span class="badge badge-success">✓ Completed</span>' : ''}
+                                      </a>
+                                </tr>`;
                 }
                 document.getElementById('loadingSpinner').style.display = 'none';
                 document.getElementById('documentsTableContainer').style.display = 'block';
             } catch (e) { console.error(e); }
         }
-        window.showUpload = function (id) { currentDocumentId = id; document.getElementById('uploadCard').style.display = 'block'; document.getElementById('uploadMessage').innerHTML = ''; document.getElementById('uploadFile').value = ''; };
-        window.downloadFile = async function (id) { const r = await fetch(`/api/Documents/${id}/download`, { headers: { 'Authorization': 'Bearer ' + token } }); if (r.ok) { const b = await r.blob(); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = 'document.pdf'; a.click(); URL.revokeObjectURL(u); } else alert('Download failed'); };
-        window.deleteDocument = async function (id) { if (confirm('Delete?')) { const r = await fetch(`/api/Documents/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } }); if (r.ok) { alert('Deleted'); loadDocuments(); } else alert('Error'); } };
-        window.updateDocStatus = async function (id, status) { const r = await fetch(`/api/Documents/${id}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(status) }); if (r.ok) { alert(`Status: ${status}`); loadDocuments(); } else alert('Error'); };
-        document.getElementById('createDocBtn').addEventListener('click', async () => { const title = document.getElementById('docTitle').value.trim(); if (!title) { alert('Enter title'); return; } const body = { title, classification: parseInt(document.getElementById('docClassification').value), priority: parseInt(document.getElementById('docPriority').value) }; const assigned = document.getElementById('docAssignedTo').value; if (assigned) body.assignedToUserId = parseInt(assigned); const deadline = document.getElementById('docDeadline').value; if (deadline) body.deadline = new Date(deadline).toISOString(); const res = await fetch('/api/Documents', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(body) }); if (res.ok) { document.getElementById('docTitle').value = ''; document.getElementById('docDeadline').value = ''; alert('Document created!'); loadDocuments(); } else alert('Error'); });
-        document.getElementById('uploadBtn').addEventListener('click', async () => { if (!currentDocumentId) { alert('No document'); return; } const file = document.getElementById('uploadFile').files[0]; if (!file) { alert('Select file'); return; } const fd = new FormData(); fd.append('file', file); const res = await fetch(`/api/Documents/${currentDocumentId}/upload`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd }); const msg = document.getElementById('uploadMessage'); if (res.ok) { msg.innerHTML = '<div class="alert alert-success">Uploaded!</div>'; loadDocuments(); } else msg.innerHTML = `<div class="alert alert-danger">Error: ${await res.text()}</div>`; });
+
+        window.showUpload = function (id) {
+            currentDocumentId = id;
+            document.getElementById('uploadCard').style.display = 'block';
+            document.getElementById('uploadMessage').innerHTML = '';
+            document.getElementById('uploadFile').value = '';
+        };
+
+        window.downloadFile = async function (id) {
+            const r = await fetch(`${API_BASE_URL}/api/Documents/${id}/download`, { headers: { 'Authorization': 'Bearer ' + token } });
+            if (r.ok) {
+                const b = await r.blob();
+                const u = URL.createObjectURL(b);
+                const a = document.createElement('a');
+                a.href = u;
+                a.download = 'document.pdf';
+                a.click();
+                URL.revokeObjectURL(u);
+            } else alert('Download failed');
+        };
+
+        window.deleteDocument = async function (id) {
+            if (confirm('Delete?')) {
+                const r = await fetch(`${API_BASE_URL}/api/Documents/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+                if (r.ok) { alert('Deleted'); loadDocuments(); } else alert('Error');
+            }
+        };
+
+        window.updateDocStatus = async function (id, status) {
+            const r = await fetch(`${API_BASE_URL}/api/Documents/${id}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(status) });
+            if (r.ok) { alert(`Status: ${status}`); loadDocuments(); } else alert('Error');
+        };
+
+        document.getElementById('createDocBtn').addEventListener('click', async () => {
+            const title = document.getElementById('docTitle').value.trim();
+            if (!title) { alert('Enter title'); return; }
+            const body = {
+                title,
+                classification: parseInt(document.getElementById('docClassification').value),
+                priority: parseInt(document.getElementById('docPriority').value)
+            };
+            const assigned = document.getElementById('docAssignedTo').value;
+            if (assigned) body.assignedToUserId = parseInt(assigned);
+            const deadline = document.getElementById('docDeadline').value;
+            if (deadline) body.deadline = new Date(deadline).toISOString();
+            const res = await fetch(`${API_BASE_URL}/api/Documents`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify(body)
+            });
+            if (res.ok) {
+                document.getElementById('docTitle').value = '';
+                document.getElementById('docDeadline').value = '';
+                alert('Document created!');
+                loadDocuments();
+            } else alert('Error');
+        });
+
+        document.getElementById('uploadBtn').addEventListener('click', async () => {
+            if (!currentDocumentId) { alert('No document'); return; }
+            const file = document.getElementById('uploadFile').files[0];
+            if (!file) { alert('Select file'); return; }
+            const fd = new FormData();
+            fd.append('file', file);
+            const res = await fetch(`${API_BASE_URL}/api/Documents/${currentDocumentId}/upload`, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token },
+                body: fd
+            });
+            const msg = document.getElementById('uploadMessage');
+            if (res.ok) {
+                msg.innerHTML = '<div class="alert alert-success">Uploaded!</div>';
+                loadDocuments();
+            } else msg.innerHTML = `<div class="alert alert-danger">Error: ${await res.text()}</div>`;
+        });
+
         let currentScanDocumentId = null, stream = null;
-        window.showScanModal = function (id) { currentScanDocumentId = id; document.getElementById('scanModal').style.display = 'block'; document.getElementById('scanOverlay').style.display = 'block'; document.getElementById('scanMessage').innerHTML = ''; document.getElementById('captureBtn').style.display = 'none'; document.getElementById('startCameraBtn').style.display = 'inline-block'; if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } const v = document.getElementById('video'); v.srcObject = null; };
-        window.startCamera = async function () { try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); const v = document.getElementById('video'); v.srcObject = stream; document.getElementById('startCameraBtn').style.display = 'none'; document.getElementById('captureBtn').style.display = 'inline-block'; document.getElementById('scanMessage').innerHTML = '<div class="alert alert-info">Camera ready. Click Capture.</div>'; } catch (err) { document.getElementById('scanMessage').innerHTML = `<div class="alert alert-danger">Camera error: ${err.message}</div>`; } };
+
+        window.showScanModal = function (id) {
+            currentScanDocumentId = id;
+            document.getElementById('scanModal').style.display = 'block';
+            document.getElementById('scanOverlay').style.display = 'block';
+            document.getElementById('scanMessage').innerHTML = '';
+            document.getElementById('captureBtn').style.display = 'none';
+            document.getElementById('startCameraBtn').style.display = 'inline-block';
+            if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+            const v = document.getElementById('video');
+            v.srcObject = null;
+        };
+
+        window.startCamera = async function () {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                const v = document.getElementById('video');
+                v.srcObject = stream;
+                document.getElementById('startCameraBtn').style.display = 'none';
+                document.getElementById('captureBtn').style.display = 'inline-block';
+                document.getElementById('scanMessage').innerHTML = '<div class="alert alert-info">Camera ready. Click Capture.</div>';
+            } catch (err) {
+                document.getElementById('scanMessage').innerHTML = `<div class="alert alert-danger">Camera error: ${err.message}</div>`;
+            }
+        };
+
         window.capturePhoto = async function () {
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
@@ -436,7 +573,7 @@
             document.getElementById('scanMessage').innerHTML = '<div class="alert alert-info">Uploading...</div>';
 
             try {
-                const response = await fetch(`/api/Documents/${currentScanDocumentId}/upload`, {
+                const response = await fetch(`${API_BASE_URL}/api/Documents/${currentScanDocumentId}/upload`, {
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + token },
                     body: formData
@@ -451,9 +588,21 @@
                 document.getElementById('scanMessage').innerHTML = '<div class="alert alert-danger">Error: ' + error.message + '</div>';
             }
         }
-        window.closeScanModal = function () { if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } document.getElementById('scanModal').style.display = 'none'; document.getElementById('scanOverlay').style.display = 'none'; document.getElementById('video').srcObject = null; };
-        function logout() { localStorage.clear(); window.location.href = '/pages/login.html'; }
-        loadUsers(); loadDocuments();
+
+        window.closeScanModal = function () {
+            if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+            document.getElementById('scanModal').style.display = 'none';
+            document.getElementById('scanOverlay').style.display = 'none';
+            document.getElementById('video').srcObject = null;
+        };
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/pages/login.html';
+        }
+
+        loadUsers();
+        loadDocuments();
     </script>
 </body>
 </html>

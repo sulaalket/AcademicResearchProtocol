@@ -4,301 +4,404 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Reports | Academic Research Protocol</title>
-    <link rel="stylesheet" href="/dist/css/adminlte.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Dashboard | Academic Research Protocol</title>
-        <link rel="stylesheet" href="/dist/css/adminlte.min.css">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-        <style>
-            /* Copy the Modern UI Overrides CSS here */
-            :root {
-                --primary-color: #0066cc;
-                --success-color: #28a745;
-                --warning-color: #ffc107;
-                --danger-color: #dc3545;
-                --info-color: #17a2b8;
-                --dark-color: #1a1a2e;
-                --light-bg: #f8f9fa;
-                --border-radius: 12px;
-                --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-                --box-shadow-hover: 0 10px 20px rgba(0, 0, 0, 0.1);
+    <script src="/pages/config.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f5f5f7;
+            padding-top: 60px;
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 0.8rem 1.5rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, #0066cc 0%, #0052a5 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-menu-desktop {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 2rem;
+        }
+
+        .nav-link-custom {
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            color: #4a5568;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+            .nav-link-custom:hover {
+                background: #f0f0f0;
+                color: #0066cc;
             }
 
-            .card {
-                border-radius: var(--border-radius);
-                border: none;
-                box-shadow: var(--box-shadow);
-                overflow: hidden;
-                transition: all 0.3s ease;
-            }
-
-                .card:hover {
-                    transform: translateY(-3px);
-                    box-shadow: var(--box-shadow-hover);
-                }
-
-            .card-header {
-                background: linear-gradient(135deg, var(--primary-color) 0%, #0052a5 100%);
+            .nav-link-custom.active {
+                background: linear-gradient(135deg, #0066cc 0%, #0052a5 100%);
                 color: white;
-                border: none;
+            }
+
+        .mobile-menu {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            z-index: 999;
+        }
+
+            .mobile-menu.show {
+                transform: translateY(0);
+            }
+
+            .mobile-menu .nav-link-custom {
+                display: block;
                 padding: 1rem 1.5rem;
+                border-bottom: 1px solid #f0f0f0;
             }
 
-                .card-header h3, .card-header .card-title {
-                    color: white;
-                    font-weight: 500;
+        .burger-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: none;
+            color: #4a5568;
+        }
+
+        .user-menu {
+            position: relative;
+            margin-left: auto;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            min-width: 180px;
+            display: none;
+            z-index: 1001;
+        }
+
+            .user-dropdown.show {
+                display: block;
+            }
+
+            .user-dropdown a {
+                display: block;
+                padding: 0.75rem 1rem;
+                color: #4a5568;
+                text-decoration: none;
+            }
+
+                .user-dropdown a:hover {
+                    background: #f5f5f7;
                 }
 
-            .btn {
-                border-radius: 8px;
-                padding: 0.5rem 1.25rem;
-                font-weight: 500;
-                transition: all 0.2s ease;
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: white;
+            border-bottom: 1px solid #f0f0f0;
+            padding: 1.2rem 1.5rem;
+            font-weight: 600;
+        }
+
+        .btn {
+            border-radius: 10px;
+            padding: 0.5rem 1.2rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0066cc 0%, #0052a5 100%);
+            border: none;
+        }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
             }
 
-            .btn-primary {
-                background: linear-gradient(135deg, var(--primary-color) 0%, #0052a5 100%);
-                border: none;
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.7rem;
+        }
+
+        .badge-warning {
+            background-color: #ffc107 !important;
+            color: #212529 !important;
+        }
+
+        .badge-success {
+            background-color: #28a745 !important;
+        }
+
+        .badge-danger {
+            background-color: #dc3545 !important;
+        }
+
+        .badge-primary {
+            background-color: #007bff !important;
+        }
+
+        .badge-info {
+            background-color: #17a2b8 !important;
+        }
+
+        .badge-secondary {
+            background-color: #6c757d !important;
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            padding: 0.6rem 1rem;
+        }
+
+        .table thead th {
+            background: #f8f9fa;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu-desktop {
+                display: none;
             }
 
-                .btn-primary:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.4);
-                }
-
-            .small-box {
-                border-radius: var(--border-radius);
-                box-shadow: var(--box-shadow);
-                overflow: hidden;
-                transition: all 0.3s ease;
+            .burger-btn {
+                display: block;
             }
 
-                .small-box:hover {
-                    transform: translateY(-5px);
-                    box-shadow: var(--box-shadow-hover);
-                }
-
-            .badge {
-                padding: 0.35rem 0.65rem;
-                border-radius: 20px;
-                font-weight: 500;
+            .navbar-brand {
+                font-size: 1.1rem;
             }
+        }
 
-            .main-sidebar {
-                background: linear-gradient(180deg, var(--dark-color) 0%, #16213e 100%);
+        @media (min-width: 769px) {
+            .mobile-menu {
+                display: none !important;
             }
-
-            .nav-sidebar .nav-link {
-                border-radius: 10px;
-                margin: 4px 8px;
-                transition: all 0.2s ease;
-            }
-
-                .nav-sidebar .nav-link:hover {
-                    background: rgba(255, 255, 255, 0.1);
-                    transform: translateX(5px);
-                }
-
-                .nav-sidebar .nav-link.active {
-                    background: linear-gradient(135deg, var(--primary-color) 0%, #0052a5 100%);
-                    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
-                }
-
-            .table thead th {
-                background: var(--light-bg);
-                font-weight: 600;
-                text-transform: uppercase;
-                font-size: 0.75rem;
-                letter-spacing: 0.5px;
-            }
-
-            .table tbody tr:hover {
-                background-color: rgba(0, 102, 204, 0.05);
-            }
-
-            .alert {
-                border-radius: var(--border-radius);
-                border: none;
-                box-shadow: var(--box-shadow);
-            }
-        </style>
-
+        }
+    </style>
 </head>
-    <body class="hold-transition sidebar-mini">
-        <div class="wrapper">
-            <!-- Navbar (same as dashboard) -->
-            <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-                <ul class="navbar-nav"><li class="nav-item"><a class="nav-link" data-widget="pushmenu" href="#"><i class="bi bi-list"></i></a></li></ul>
-                <ul class="navbar-nav ml-auto">
-                    <li class="nav-item"><span class="nav-link"><i class="bi bi-person-circle"></i> <span id="userNameDisplay"></span></span></li>
-                    <li class="nav-item"><button onclick="logout()" class="btn btn-outline-danger btn-sm ml-2">Logout</button></li>
-                </ul>
-            </nav>
+<body>
+    <nav class="navbar">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <button class="burger-btn" id="burgerBtn"><i class="bi bi-list"></i></button>
+            <a href="dashboard.html" class="navbar-brand">Academic<span style="font-weight:600;">Research</span></a>
+            <div class="nav-menu-desktop">
+                <a href="dashboard.html" class="nav-link-custom">Dashboard</a>
+                <a href="users.html" id="usersMenuDesktop" class="nav-link-custom" style="display: none;">Users</a>
+                <a href="documents.html" class="nav-link-custom">Documents</a>
+                <a href="research.html" class="nav-link-custom">Research</a>
+                <a href="statistics.html" class="nav-link-custom">Statistics</a>
+                <a href="chat.html" class="nav-link-custom">Chat</a>
+            </div>
+        </div>
+        <div class="user-menu">
+            <button class="btn btn-outline-secondary btn-sm" id="userMenuBtn" style="border-radius: 30px;"><i class="bi bi-person-circle"></i> <span id="userNameDisplay"></span> <i class="bi bi-chevron-down"></i></button>
+            <div class="user-dropdown" id="userDropdown"><a href="#" onclick="logout()"><i class="bi bi-box-arrow-right me-2"></i> Logout</a></div>
+        </div>
+    </nav>
 
-            <!-- Sidebar -->
-            <aside class="main-sidebar sidebar-dark-primary elevation-4">
-                <a href="#" class="brand-link"><span class="brand-text font-weight-light">AcademicResearch</span></a>
-                <div class="sidebar">
-                    <nav class="mt-2">
-                        <ul class="nav nav-pills nav-sidebar flex-column">
-                            <li class="nav-item"><a href="dashboard.html" class="nav-link"><i class="nav-icon bi bi-speedometer2"></i><p>Dashboard</p></a></li>
-                            <li class="nav-item"><a href="documents.html" class="nav-link"><i class="nav-icon bi bi-file-earmark-text"></i><p>Documents</p></a></li>
-                            <li class="nav-item"><a href="research.html" class="nav-link"><i class="nav-icon bi bi-flask"></i><p>Research Topics</p></a></li>
-                            <li class="nav-item"><a href="reports.html" class="nav-link active"><i class="nav-icon bi bi-graph-up"></i><p>Reports</p></a></li>
-                            <li class="nav-item">
-                                <a href="statistics.html" class="nav-link">
-                                    <i class="nav-icon bi bi-bar-chart"></i>
-                                    <p>Statistics</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="chat.html" class="nav-link">
-                                    <i class="nav-icon bi bi-chat-dots"></i>
-                                    <p>Chat</p>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-            </aside>
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="dashboard.html" class="nav-link-custom">Dashboard</a>
+        <a href="users.html" id="usersMenuMobile" class="nav-link-custom" style="display: none;">Users</a>
+        <a href="documents.html" class="nav-link-custom">Documents</a>
+        <a href="research.html" class="nav-link-custom">Research</a>
+        <a href="statistics.html" class="nav-link-custom">Statistics</a>
+        <a href="chat.html" class="nav-link-custom">Chat</a>
+    </div>
 
-            <!-- Content -->
-            <div class="content-wrapper">
-                <div class="content-header">
-                    <div class="container-fluid">
-                        <h1 class="m-0" id="reportTitle">Reports</h1>
-                    </div>
+    <div class="container-fluid" style="max-width: 1400px; margin: 0 auto; padding: 20px;">
+        <div class="card">
+            <div class="card-header">
+                <h3 id="reportTitle">Reports</h3>
+                <div class="card-tools">
+                    <a href="dashboard.html" class="btn btn-sm btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Dashboard
+                    </a>
                 </div>
-                <div class="content">
-                    <div class="container-fluid">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title" id="reportSubtitle">Loading...</h3>
-                                <div class="card-tools">
-                                    <a href="dashboard.html" class="btn btn-sm btn-secondary">
-                                        <i class="bi bi-arrow-left"></i> Back to Dashboard
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div id="loadingSpinner" class="text-center">
-                                    <i class="bi bi-hourglass-split"></i> Loading report...
-                                </div>
-                                <div id="reportContainer" style="display: none;">
-                                    <table class="table table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <th>Protocol #</th>
-                                                <th>Title</th>
-                                                <th>Status</th>
-                                                <th>Priority</th>
-                                                <th>Deadline</th>
-                                                <th>Assigned To</th>
-                                                <th>Created By</th>
-                                        </thead>
-                                        <tbody id="reportTableBody"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
+            </div>
+            <div class="card-body">
+                <div id="loadingSpinner" class="text-center py-5">
+                    <i class="bi bi-hourglass-split"></i> Loading report...
+                </div>
+                <div id="reportContainer" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Protocol #</th>
+                                    <th>Title</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th>Deadline</th>
+                                    <th>Assigned To</th>
+                                    <th>Created By</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportTableBody"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
-        </div>
+    </div>
 
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="/dist/js/adminlte.min.js"></script>
-        <script src="/dist/js/authGuard.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 
-        <script>
-            protectPage();
-            document.getElementById('userNameDisplay').textContent = localStorage.getItem('userName') || 'User';
+    <script>
+        // Check authentication
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/pages/login.html';
+        }
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const reportType = urlParams.get('type') || 'delayed';
+        document.getElementById('userNameDisplay').textContent = localStorage.getItem('userName') || 'User';
 
-            function getPriorityBadge(priority) {
-                if (priority === 2) return 'danger';
-                if (priority === 1) return 'warning';
-                return 'info';
+        const urlParams = new URLSearchParams(window.location.search);
+        const reportType = urlParams.get('type') || 'delayed';
+
+        function getPriorityBadge(priority) {
+            if (priority === 2) return 'danger';
+            if (priority === 1) return 'warning';
+            return 'info';
+        }
+
+        function getPriorityText(priority) {
+            if (priority === 2) return 'High';
+            if (priority === 1) return 'Medium';
+            return 'Low';
+        }
+
+        function getStatusBadge(status) {
+            const badges = { 'Draft': 'secondary', 'InProgress': 'primary', 'Completed': 'success', 'Pending': 'warning' };
+            return badges[status] || 'secondary';
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function loadReport() {
+            const title = document.getElementById('reportTitle');
+            let url = '';
+
+            if (reportType === 'delayed') {
+                title.textContent = 'Delay Reports - Documents Past Deadline';
+                url = `${API_BASE_URL}/api/Documents/reports/delayed`;
+            } else if (reportType === 'highpriority') {
+                title.textContent = 'Priority Reports - High Priority Documents';
+                url = `${API_BASE_URL}/api/Documents/reports/by-priority/2`;
             }
 
-            function getPriorityText(priority) {
-                if (priority === 2) return 'High';
-                if (priority === 1) return 'Medium';
-                return 'Low';
-            }
+            try {
+                const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+                const docs = await res.json();
 
-            function escapeHtml(text) {
-                if (!text) return '';
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            }
+                const tbody = document.getElementById('reportTableBody');
+                tbody.innerHTML = '';
 
-            async function loadReport() {
-                const title = document.getElementById('reportTitle');
-                const subtitle = document.getElementById('reportSubtitle');
-                let url = '';
-
-                if (reportType === 'delayed') {
-                    title.textContent = 'Delay Reports';
-                    subtitle.textContent = 'Documents Past Deadline';
-                    url = '/api/Documents/reports/delayed';
-                } else if (reportType === 'highpriority') {
-                    title.textContent = 'Priority Reports';
-                    subtitle.textContent = 'High Priority Documents';
-                    url = '/api/Documents/reports/by-priority/2';
+                if (docs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No documents found for this report</td></tr>';
+                } else {
+                    docs.forEach(doc => {
+                        tbody.innerHTML += `
+                                <tr>
+                                    <td><code>${escapeHtml(doc.protocolNumber)}</code></td>
+                                    <td>${escapeHtml(doc.title)}</td>
+                                    <td><span class="badge badge-${getStatusBadge(doc.status)}">${doc.status}</span></td>
+                                    <td><span class="badge badge-${getPriorityBadge(doc.priority)}">${getPriorityText(doc.priority)}</span></td>
+                                    <td>${doc.deadline ? new Date(doc.deadline).toLocaleDateString() : '-'}</td>
+                                    <td>${escapeHtml(doc.assignedToUserName || '-')}</td>
+                                    <td>${escapeHtml(doc.createdByUserName)}</td>
+                                </tr>
+                            `;
+                    });
                 }
 
-                try {
-                    const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
-                    const docs = await res.json();
-
-                    const tbody = document.getElementById('reportTableBody');
-                    tbody.innerHTML = '';
-
-                    if (docs.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No documents found for this report</td></tr>';
-                    } else {
-                        docs.forEach(doc => {
-                            tbody.innerHTML += `
-                                        <tr>
-                                            <td><code>${escapeHtml(doc.protocolNumber)}</code>\\
-                                            <td>${escapeHtml(doc.title)}\\
-                                            <td><span class="badge badge-${getStatusBadge(doc.status)}">${doc.status}</span>\\
-                                            <td><span class="badge badge-${getPriorityBadge(doc.priority)}">${getPriorityText(doc.priority)}</span>\\
-                                            <td>${doc.deadline ? new Date(doc.deadline).toLocaleDateString() : '-'}\\
-                                            <td>${escapeHtml(doc.assignedToUserName || '-')}\\
-                                            <td>${escapeHtml(doc.createdByUserName)}\\
-                                         \\
-                                    `;
-                        });
-                    }
-
-                    document.getElementById('loadingSpinner').style.display = 'none';
-                    document.getElementById('reportContainer').style.display = 'block';
-                } catch (error) {
-                    console.error('Error:', error);
-                    document.getElementById('loadingSpinner').innerHTML = '<div class="alert alert-danger">Error loading report</div>';
-                }
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('reportContainer').style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loadingSpinner').innerHTML = '<div class="alert alert-danger">Error loading report</div>';
             }
+        }
 
-            function getStatusBadge(status) {
-                const badges = { 'Draft': 'secondary', 'InProgress': 'primary', 'Completed': 'success', 'Pending': 'warning' };
-                return badges[status] || 'secondary';
-            }
+        // Mobile menu toggle
+        const burgerBtn = document.getElementById('burgerBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        burgerBtn.addEventListener('click', () => { mobileMenu.classList.toggle('show'); });
+        document.querySelectorAll('.mobile-menu a').forEach(link => {
+            link.addEventListener('click', () => { mobileMenu.classList.remove('show'); });
+        });
 
-            function logout() { localStorage.clear(); window.location.href = '/pages/login.html'; }
+        // User dropdown
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        const userDropdown = document.getElementById('userDropdown');
+        userMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            userDropdown.classList.toggle('show');
+        });
+        document.addEventListener('click', () => {
+            userDropdown.classList.remove('show');
+        });
 
-            loadReport();
-        </script>
-    </body>
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/pages/login.html';
+        }
+
+        loadReport();
+    </script>
+</body>
 </html>
